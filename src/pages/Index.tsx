@@ -23,10 +23,14 @@ const Index = () => {
     setSidebarOpen(true);
   };
 
-  const handleCloseSidebar = () => {
-    setSidebarOpen(false);
-    // Don't clear selectedLocation immediately to allow for smooth closing animation
-    setTimeout(() => setSelectedLocation(null), 300);
+  const handleToggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+    if (!sidebarOpen) {
+      // Don't clear selectedLocation when opening
+    } else {
+      // Clear selectedLocation when closing
+      setTimeout(() => setSelectedLocation(null), 300);
+    }
   };
 
   if (isLoading) {
@@ -61,7 +65,7 @@ const Index = () => {
         />
         <Sidebar 
           isOpen={sidebarOpen}
-          onClose={handleCloseSidebar}
+          onToggle={handleToggleSidebar}
           reports={selectedLocation ? [selectedLocation] : reports}
           selectedLocation={selectedLocation}
         />

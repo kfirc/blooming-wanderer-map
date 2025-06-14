@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { BloomReport, Location, User, Flower, FlowerPerLocation } from '@/types/BloomReport';
 
@@ -45,7 +44,26 @@ export const bloomReportsService = {
     return data || [];
   },
 
-  // Fetch all locations
+  // Fetch reports with pagination
+  async getReportsWithPagination(offset: number, limit: number): Promise<BloomReport[]> {
+    const { data, error } = await supabase
+      .from('bloom_reports')
+      .select(`
+        *,
+        location:locations(*),
+        user:users(*)
+      `)
+      .order('post_date', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error('Error fetching paginated bloom reports:', error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
   async getLocations(): Promise<Location[]> {
     const { data, error } = await supabase
       .from('locations')
@@ -60,7 +78,6 @@ export const bloomReportsService = {
     return data || [];
   },
 
-  // Fetch all flowers
   async getFlowers(): Promise<Flower[]> {
     const { data, error } = await supabase
       .from('flowers')
@@ -75,7 +92,6 @@ export const bloomReportsService = {
     return data || [];
   },
 
-  // Fetch flowers for a specific location
   async getFlowersForLocation(locationId: string): Promise<FlowerPerLocation[]> {
     const { data, error } = await supabase
       .from('flowers_per_location')
@@ -94,9 +110,7 @@ export const bloomReportsService = {
     return data || [];
   },
 
-  // Add flower reaction (like/dislike)
   async addFlowerReaction(flowerId: string, locationId: string, reactionType: 'like' | 'dislike'): Promise<void> {
-    // Get user's IP address (simplified approach)
     const userIp = await this.getUserIp();
 
     const { error } = await supabase
@@ -116,11 +130,9 @@ export const bloomReportsService = {
     }
   },
 
-  // Get flower reactions for a specific flower at a location
   async getFlowerReactions(flowerId: string, locationId: string): Promise<{likes: number, dislikes: number, userReaction?: 'like' | 'dislike'}> {
     const userIp = await this.getUserIp();
 
-    // Get total likes and dislikes
     const { data: reactions, error } = await supabase
       .from('flower_location_reactions')
       .select('reaction_type, user_ip')
@@ -139,7 +151,6 @@ export const bloomReportsService = {
     return { likes, dislikes, userReaction };
   },
 
-  // Helper function to get user IP (simplified)
   async getUserIp(): Promise<string> {
     try {
       const response = await fetch('https://api.ipify.org?format=json');
@@ -147,7 +158,6 @@ export const bloomReportsService = {
       return data.ip;
     } catch (error) {
       console.error('Error getting user IP:', error);
-      // Fallback to a random identifier stored in localStorage
       let userIdentifier = localStorage.getItem('user_identifier');
       if (!userIdentifier) {
         userIdentifier = Math.random().toString(36).substring(2, 15);
@@ -157,7 +167,6 @@ export const bloomReportsService = {
     }
   },
 
-  // Create a new location
   async createLocation(location: Omit<Location, 'id' | 'created_at' | 'updated_at'>): Promise<Location> {
     const { data, error } = await supabase
       .from('locations')
@@ -173,7 +182,6 @@ export const bloomReportsService = {
     return data;
   },
 
-  // Create a new user
   async createUser(user: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User> {
     const { data, error } = await supabase
       .from('users')
@@ -189,7 +197,6 @@ export const bloomReportsService = {
     return data;
   },
 
-  // Create a new bloom report
   async createReport(report: Omit<BloomReport, 'id' | 'created_at' | 'updated_at' | 'location' | 'user'>): Promise<BloomReport> {
     const { data, error } = await supabase
       .from('bloom_reports')
@@ -209,7 +216,6 @@ export const bloomReportsService = {
     return data;
   },
 
-  // Update likes count for a report
   async updateLikesCount(reportId: string, likesCount: number): Promise<void> {
     const { error } = await supabase
       .from('bloom_reports')

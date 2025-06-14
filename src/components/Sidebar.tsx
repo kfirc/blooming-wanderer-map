@@ -1,14 +1,16 @@
 
-import React, { useState } from 'react';
-import { Calendar, Heart, Camera, Navigation, ExternalLink, Flower2, ArrowDown, ChevronRight, ChevronLeft } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Calendar, Heart, Camera, Navigation, ExternalLink, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BloomReport } from '../types/BloomReport';
 import ImageGallery from './ImageGallery';
 import FlowersList from './FlowersList';
+import { useQuery } from '@tanstack/react-query';
+import { bloomReportsService } from '../services/bloomReportsService';
 
 interface SidebarProps {
   isOpen: boolean;
-  onClose: () => void;
+  onToggle: () => void;
   reports: BloomReport[];
   selectedLocation: BloomReport | null;
 }
@@ -26,8 +28,45 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString('he-IL');
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, reports, selectedLocation }) => {
-  const [showReports, setShowReports] = useState(false);
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, reports, selectedLocation }) => {
+  const [offset, setOffset] = useState(0);
+  const [allReports, setAllReports] = useState<BloomReport[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Load more reports with pagination
+  const loadMoreReports = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    
+    setLoadingMore(true);
+    try {
+      const newReports = await bloomReportsService.getReportsWithPagination(offset, 5);
+      if (newReports.length < 5) {
+        setHasMore(false);
+      }
+      setAllReports(prev => [...prev, ...newReports]);
+      setOffset(prev => prev + 5);
+    } catch (error) {
+      console.error('Error loading more reports:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [offset, loadingMore, hasMore]);
+
+  // Initialize with first batch
+  useEffect(() => {
+    if (isOpen && !selectedLocation && allReports.length === 0) {
+      loadMoreReports();
+    }
+  }, [isOpen, selectedLocation, allReports.length, loadMoreReports]);
+
+  // Handle scroll to load more
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight * 1.5 && hasMore && !loadingMore) {
+      loadMoreReports();
+    }
+  }, [hasMore, loadingMore, loadMoreReports]);
 
   return (
     <>
@@ -35,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, reports, selectedLoc
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black/30 z-40 md:hidden"
-          onClick={onClose}
+          onClick={onToggle}
         />
       )}
 
@@ -43,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, reports, selectedLoc
       <Button
         variant="secondary"
         size="sm"
-        onClick={onClose}
+        onClick={onToggle}
         className={`
           fixed top-1/2 -translate-y-1/2 z-50 transition-all duration-300 ease-in-out
           rounded-l-lg rounded-r-none shadow-lg w-8 h-16 p-0
@@ -72,7 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, reports, selectedLoc
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto" onScroll={handleScroll}>
             {selectedLocation ? (
               /* Single Location View */
               <div>
@@ -82,47 +121,44 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, reports, selectedLoc
                   locationName={selectedLocation.location.name}
                 />
                 
-                {/* Toggle Reports Button */}
+                {/* Reports Section - Always shown */}
                 <div className="p-4 border-t border-gray-200">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowReports(!showReports)}
-                    className="w-full flex items-center justify-center space-x-2"
-                  >
-                    <span>{showReports ? 'הסתר דיווחים' : 'הצג דיווחים'}</span>
-                    <ArrowDown className={`h-4 w-4 transition-transform ${showReports ? 'rotate-180' : ''}`} />
-                  </Button>
-                </div>
-
-                {/* Reports Section */}
-                {showReports && (
-                  <div className="p-4 pt-0">
-                    <div className="space-y-4">
-                      {reports.filter(report => report.location.id === selectedLocation.location.id).length > 0 ? (
-                        reports
-                          .filter(report => report.location.id === selectedLocation.location.id)
-                          .map((report) => (
-                            <LocationCard key={report.id} report={report} isDetailed={true} />
-                          ))
-                      ) : (
-                        <div className="text-center text-gray-600 py-8">
-                          <Camera className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                          <p>אין דיווחים עבור מיקום זה</p>
-                        </div>
-                      )}
-                    </div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">דיווחים</h3>
+                  <div className="space-y-4">
+                    {reports.filter(report => report.location.id === selectedLocation.location.id).length > 0 ? (
+                      reports
+                        .filter(report => report.location.id === selectedLocation.location.id)
+                        .map((report) => (
+                          <LocationCard key={report.id} report={report} isDetailed={true} />
+                        ))
+                    ) : (
+                      <div className="text-center text-gray-600 py-8">
+                        <Camera className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                        <p>אין דיווחים עבור מיקום זה</p>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             ) : (
               /* All Reports List */
               <div className="p-4 space-y-4">
                 <div className="text-sm text-gray-600 mb-4">
-                  מציג {reports.length} דיווחים מהשבוע האחרון
+                  מציג דיווחי פריחה אחרונים
                 </div>
-                {reports.map((report) => (
+                {allReports.map((report) => (
                   <LocationCard key={report.id} report={report} isDetailed={false} />
                 ))}
+                {loadingMore && (
+                  <div className="text-center py-4 text-gray-500">
+                    טוען עוד דיווחים...
+                  </div>
+                )}
+                {!hasMore && allReports.length > 0 && (
+                  <div className="text-center py-4 text-gray-500 text-sm">
+                    הוצגו כל הדיווחים
+                  </div>
+                )}
               </div>
             )}
           </div>
