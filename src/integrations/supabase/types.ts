@@ -234,6 +234,36 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          facebook_id: string | null
+          facebook_username: string | null
+          id: string
+          profile_photo_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          facebook_id?: string | null
+          facebook_username?: string | null
+          id: string
+          profile_photo_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          facebook_id?: string | null
+          facebook_username?: string | null
+          id?: string
+          profile_photo_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string

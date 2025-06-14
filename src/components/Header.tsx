@@ -1,8 +1,9 @@
+
 import React from 'react';
-import { Flower2, Facebook, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Flower2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { bloomReportsService } from '../services/bloomReportsService';
+import AuthButton from './AuthButton';
 
 const Header = () => {
   // Fetch reports and flowers data for stats
@@ -57,19 +58,7 @@ const Header = () => {
           </div>
 
           {/* Auth */}
-          <div className="flex items-center space-x-4">
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="hidden sm:flex items-center space-x-2 border-blue-200 text-blue-700 hover:bg-blue-50"
-            >
-              <Facebook className="h-4 w-4" />
-              <span>התחבר עם פייסבוק</span>
-            </Button>
-            <Button size="sm" variant="ghost" className="p-2">
-              <User className="h-5 w-5" />
-            </Button>
-          </div>
+          <AuthButton />
         </div>
       </div>
     </header>
