@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import SignalStrength from './SignalStrength';
 import GlowingIcon from './GlowingIcon';
+import MonthlyIntensityChart from './MonthlyIntensityChart';
 
 interface FlowersListProps {
   locationId: string;
@@ -71,6 +72,39 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
 
   const handleReaction = (flowerId: string, reactionType: 'like' | 'dislike') => {
     reactionMutation.mutate({ flowerId, reactionType });
+  };
+
+  // Generate sample monthly data based on bloom season
+  const generateMonthlyData = (flower: any, intensity: number) => {
+    const data = new Array(12).fill(0);
+    if (flower.bloom_start_month && flower.bloom_end_month) {
+      const start = flower.bloom_start_month - 1; // Convert to 0-based index
+      const end = flower.bloom_end_month - 1;
+      
+      // Create intensity curve during bloom period
+      for (let i = 0; i < 12; i++) {
+        if (start <= end) {
+          // Normal case (e.g., March to August)
+          if (i >= start && i <= end) {
+            const progress = (i - start) / (end - start);
+            // Bell curve: peak in the middle of bloom season
+            data[i] = Math.sin(progress * Math.PI) * intensity;
+          }
+        } else {
+          // Cross-year case (e.g., November to February)
+          if (i >= start || i <= end) {
+            let progress;
+            if (i >= start) {
+              progress = (i - start) / (12 - start + end + 1);
+            } else {
+              progress = (12 - start + i) / (12 - start + end + 1);
+            }
+            data[i] = Math.sin(progress * Math.PI) * intensity;
+          }
+        }
+      }
+    }
+    return data;
   };
 
   const formatBloomSeason = (flower: any) => {
@@ -152,18 +186,19 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
         <p className="text-sm text-gray-600">פרחים פורחים כעת</p>
       </div>
       
-      <div className="space-y-3">
+      <div className="space-y-4">
         {flowers.map((flowerData) => {
           const reactions = reactionsData[flowerData.flower.id] || { likes: 0, dislikes: 0 };
           const isReacting = reactingFlowers.has(flowerData.flower.id);
           const inSeason = isFlowerInSeason(flowerData.flower);
+          const monthlyData = generateMonthlyData(flowerData.flower, flowerData.intensity);
           
           return (
             <div 
               key={flowerData.id} 
-              className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+              className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4"
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="relative">
                     {flowerData.flower.icon_url ? (
@@ -200,6 +235,15 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
                     <span className="text-xs text-green-600 font-medium">פורח כעת</span>
                   )}
                 </div>
+              </div>
+
+              {/* Monthly Intensity Chart */}
+              <div className="flex justify-center bg-white rounded-lg p-3 border border-gray-100">
+                <MonthlyIntensityChart 
+                  monthlyData={monthlyData}
+                  bloomStartMonth={flowerData.flower.bloom_start_month}
+                  bloomEndMonth={flowerData.flower.bloom_end_month}
+                />
               </div>
 
               {/* Reaction buttons */}
