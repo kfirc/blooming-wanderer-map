@@ -1,9 +1,7 @@
-
 import React from 'react';
 import { Flower2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { bloomReportsService } from '../services/bloomReportsService';
-import AuthButton from './AuthButton';
 
 const Header = () => {
   // Fetch reports and flowers data for stats
@@ -56,9 +54,6 @@ const Header = () => {
               <div className="text-gray-500">דיוק התחזיות</div>
             </div>
           </div>
-
-          {/* Auth */}
-          <AuthButton />
         </div>
       </div>
     </header>

@@ -94,7 +94,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, reports, selectedLo
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/30 z-40 md:hidden"
+          className="fixed inset-0 bg-black/30 z-40"
           onClick={onToggle}
         />
       )}
@@ -195,7 +195,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ report, isDetailed }) => {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow text-right">
       {/* Header */}
       <div className="p-4 pb-3">
         <div className="flex items-center space-x-3 mb-3">
@@ -244,27 +244,6 @@ const LocationCard: React.FC<LocationCardProps> = ({ report, isDetailed }) => {
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <Camera className="h-4 w-4" />
             <span>{report.images.length} תמונות</span>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Button 
-              size="sm" 
-              variant="outline"
-              className="text-xs flex items-center space-x-1 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-              onClick={() => window.open(generateWazeUrl(report.location.latitude, report.location.longitude), '_blank')}
-            >
-              <img src="/waze.svg" alt="Waze" className="h-4 w-4" />
-              <span>Waze</span>
-            </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              className="text-xs flex items-center space-x-1 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-              onClick={() => window.open(report.facebook_post_url, '_blank')}
-            >
-              <ExternalLink className="h-3 w-3" />
-              <span>פייסבוק</span>
-            </Button>
           </div>
         </div>
       </div>

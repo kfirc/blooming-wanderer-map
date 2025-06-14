@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Map from '../components/Map';
 import Sidebar from '../components/Sidebar';
@@ -22,6 +21,15 @@ const Index = () => {
     setSelectedLocation(report);
     setSidebarOpen(true);
   };
+
+  // Close sidebar on Escape key
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSidebarOpen(false);
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
 
   const handleToggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);

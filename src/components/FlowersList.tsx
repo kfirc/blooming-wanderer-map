@@ -190,11 +190,11 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
           return (
             <div 
               key={flowerData.id} 
-              className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4"
+              className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4 text-right"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="relative">
+              <div className="flex flex-row-reverse items-center justify-between gap-x-4">
+                <div className="flex flex-row-reverse items-center gap-x-3">
+                  <div className="relative ml-2">
                     {flowerData.flower.icon_url ? (
                       <img 
                         src={flowerData.flower.icon_url} 
@@ -211,7 +211,6 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
                       className="absolute -top-1 -right-1"
                     />
                   </div>
-                  
                   <div>
                     <h4 className="font-medium text-gray-800">{flowerData.flower.name}</h4>
                     {flowerData.flower.description && (
@@ -222,8 +221,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
                     )}
                   </div>
                 </div>
-
-                <div className="text-left flex items-center space-x-3">
+                <div className="flex flex-row-reverse items-center gap-x-3 text-left">
                   <SignalStrength intensity={flowerData.intensity} />
                   {inSeason && (
                     <span className="text-xs text-green-600 font-medium">פורח כעת</span>
@@ -232,7 +230,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
               </div>
 
               {/* Monthly Intensity Chart */}
-              <div className="flex justify-center bg-white rounded-lg p-3 border border-gray-100">
+              <div className="flex justify-center items-center bg-white rounded-lg p-3 border border-gray-100">
                 <MonthlyIntensityChart 
                   monthlyData={monthlyData}
                   bloomStartMonth={flowerData.flower.bloom_start_month}
@@ -241,8 +239,8 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
               </div>
 
               {/* Reaction buttons */}
-              <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                <div className="flex items-center space-x-4">
+              <div className="flex flex-row-reverse items-center justify-between pt-3 border-t border-gray-200">
+                <div className="flex flex-row-reverse items-center gap-x-4">
                   <Button
                     variant={reactions.userReaction === 'like' ? 'default' : 'outline'}
                     size="sm"
@@ -265,7 +263,6 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
                     <span>{reactions.dislikes}</span>
                   </Button>
                 </div>
-                
                 {isReacting && (
                   <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
                 )}

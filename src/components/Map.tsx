@@ -48,11 +48,6 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
       maxZoom: 19
     }).addTo(leafletMap.current);
 
-    // Add zoom control to top-left
-    L.control.zoom({
-      position: 'topleft'
-    }).addTo(leafletMap.current);
-
     // Set map as loaded
     setMapLoaded(true);
     setMapError(null);

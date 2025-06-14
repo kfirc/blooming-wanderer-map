@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { BloomReport } from '../types/BloomReport';
@@ -20,49 +19,63 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
 }) => {
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
 
+  // Helper to create marker icon HTML and size
+  const getMarkerIcon = (report, isSelected, zoom) => {
+    const baseSize = 40;
+    const maxSize = 40;
+    const scale = Math.pow(2, (zoom - 9) / 2); // 9 is default zoom
+    const size = Math.min(Math.round(baseSize * scale), maxSize);
+    const flowerTags = report.flower_types.slice(0, 3).map(flower => 
+      `<span class="flower-tag">${flower}</span>`
+    ).join('');
+    const color = report.location.intensity > 0.7 ? '#ef4444' : report.location.intensity > 0.4 ? '#f97316' : '#eab308';
+    return L.divIcon({
+      html: `
+        <div class="relative transform -translate-x-1/2 -translate-y-1/2">
+          <div class="rounded-full border-3 shadow-lg flex items-center justify-center transition-all duration-200 ${
+            isSelected 
+              ? 'bg-orange-500 border-white scale-125' 
+              : 'bg-white border-purple-400 hover:border-purple-600'
+          }" style="background-color: ${color}; border-color: white; width: ${size}px; height: ${size}px;">
+            <svg class="text-white" width="${Math.round(size/2)}" height="${Math.round(size/2)}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          ${flowerTags ? `<div class="flower-tags-container">${flowerTags}</div>` : ''}
+        </div>
+      `,
+      className: 'custom-bloom-marker',
+      iconSize: [size, size + 20],
+      iconAnchor: [size / 2, size],
+    });
+  };
+
   useEffect(() => {
     if (!map || !mapLoaded) return;
 
     console.log('Updating markers with reports:', reports.length);
 
-    // Clear existing markers
+    // Helper to update all marker icons on zoom
+    const updateMarkerIcons = () => {
+      const zoom = map.getZoom();
+      Object.entries(markersRef.current).forEach(([id, marker]) => {
+        const report = reports.find(r => r.id === id);
+        if (report) {
+          const isSelected = selectedLocation?.id === report.id;
+          marker.setIcon(getMarkerIcon(report, isSelected, zoom));
+        }
+      });
+    };
+
+    // Initial marker creation
     Object.values(markersRef.current).forEach(marker => marker.remove());
     markersRef.current = {};
-
+    const zoom = map.getZoom();
     reports.forEach((report) => {
       const { latitude, longitude } = report.location;
-      const intensity = report.location.intensity;
-      const color = intensity > 0.7 ? '#ef4444' : intensity > 0.4 ? '#f97316' : '#eab308';
-
-      // Create flower tags for this location
-      const flowerTags = report.flower_types.slice(0, 3).map(flower => 
-        `<span class="flower-tag">${flower}</span>`
-      ).join('');
-
-      // Create custom marker icon with flower tags
       const isSelected = selectedLocation?.id === report.id;
-      const markerIcon = L.divIcon({
-        html: `
-          <div class="relative transform -translate-x-1/2 -translate-y-1/2">
-            <div class="w-10 h-10 rounded-full border-3 shadow-lg flex items-center justify-center transition-all duration-200 ${
-              isSelected 
-                ? 'bg-orange-500 border-white scale-125' 
-                : 'bg-white border-purple-400 hover:border-purple-600'
-            }" style="background-color: ${color}; border-color: white;">
-              <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-            ${flowerTags ? `<div class="flower-tags-container">${flowerTags}</div>` : ''}
-          </div>
-        `,
-        className: 'custom-bloom-marker',
-        iconSize: [40, 60],
-        iconAnchor: [20, 50],
-      });
-
-      // Create marker
+      const markerIcon = getMarkerIcon(report, isSelected, zoom);
       const marker = L.marker([latitude, longitude], { icon: markerIcon })
         .addTo(map);
 
@@ -98,6 +111,12 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
 
       markersRef.current[report.id] = marker;
     });
+
+    // Listen for zoom events to update marker size
+    map.on('zoomend', updateMarkerIcons);
+    return () => {
+      map.off('zoomend', updateMarkerIcons);
+    };
   }, [map, reports, selectedLocation, onLocationClick, mapLoaded]);
 
   return null; // This component doesn't render anything directly
