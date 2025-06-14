@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface MonthlyIntensityChartProps {
@@ -7,67 +6,69 @@ interface MonthlyIntensityChartProps {
   bloomEndMonth?: number;
 }
 
+const seasonEmojis = [
+  { name: 'חורף', emoji: '❄️' }, // דצמבר, ינואר, פברואר
+  { name: 'אביב', emoji: '🌸' }, // מרץ, אפריל, מאי
+  { name: 'קיץ', emoji: '☀️' }, // יוני, יולי, אוגוסט
+  { name: 'סתיו', emoji: '🍂' }, // ספטמבר, אוקטובר, נובמבר
+];
+
+const width = 200;
+const height = 40;
+const padding = 10;
+
+const createPath = (monthlyData: number[]) => {
+  const points = monthlyData.map((intensity, index) => {
+    const x = padding + (index * (width - 2 * padding)) / 11;
+    const y = height - padding - (intensity * (height - 2 * padding));
+    return `${x},${y}`;
+  });
+  return `M ${points.join(' L ')}`;
+};
+
+const getColor = (intensity: number) => {
+  const red = Math.floor(255 * (1 - intensity));
+  const green = Math.floor(255 * intensity);
+  return `rgb(${red}, ${green}, 0)`;
+};
+
+const createGradient = (monthlyData: number[]) => {
+  return monthlyData.map((intensity, index) => (
+    <stop 
+      key={index}
+      offset={`${(index / 11) * 100}%`}
+      stopColor={getColor(intensity)}
+    />
+  ));
+};
+
+const getSeasonEmojiRow = () => {
+  return seasonEmojis.map((season, i) => (
+    <React.Fragment key={season.name}>
+      {i > 0 && <span className="mx-1">|</span>}
+      <span>{season.emoji}</span>
+    </React.Fragment>
+  ));
+};
+
 const MonthlyIntensityChart: React.FC<MonthlyIntensityChartProps> = ({ 
   monthlyData, 
   bloomStartMonth = 1, 
   bloomEndMonth = 12 
 }) => {
-  const months = ['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'];
-  const width = 200;
-  const height = 40;
-  const padding = 10;
-  
-  // Create SVG path for the intensity line
-  const createPath = () => {
-    const points = monthlyData.map((intensity, index) => {
-      const x = padding + (index * (width - 2 * padding)) / 11;
-      const y = height - padding - (intensity * (height - 2 * padding));
-      return `${x},${y}`;
-    });
-    return `M ${points.join(' L ')}`;
-  };
-
-  // Get color based on intensity (red to green gradient)
-  const getColor = (intensity: number) => {
-    const red = Math.floor(255 * (1 - intensity));
-    const green = Math.floor(255 * intensity);
-    return `rgb(${red}, ${green}, 0)`;
-  };
-
-  // Create gradient definition
-  const createGradient = () => {
-    return monthlyData.map((intensity, index) => (
-      <stop 
-        key={index}
-        offset={`${(index / 11) * 100}%`}
-        stopColor={getColor(intensity)}
-      />
-    ));
-  };
-
-  // Get season emojis
-  const getSeasonEmojis = () => {
-    const seasons = [];
-    if (bloomStartMonth <= 3 || bloomEndMonth >= 12) seasons.push('❄️'); // Winter
-    if ((bloomStartMonth <= 5 && bloomEndMonth >= 3) || (bloomStartMonth <= 3 && bloomEndMonth >= 3)) seasons.push('🌸'); // Spring
-    if (bloomStartMonth <= 8 && bloomEndMonth >= 6) seasons.push('☀️'); // Summer
-    if (bloomStartMonth <= 11 && bloomEndMonth >= 9) seasons.push('🍂'); // Fall
-    return seasons;
-  };
-
+  const isEmpty = monthlyData.every((v) => v === 0);
   return (
-    <div className="flex flex-col items-center space-y-2">
+    <div className="flex flex-col items-center space-y-2" dir="rtl">
       {/* Intensity Chart */}
       <div className="relative">
         <svg width={width} height={height} className="overflow-visible">
           <defs>
             <linearGradient id={`gradient-${bloomStartMonth}-${bloomEndMonth}`} x1="0%" y1="0%" x2="100%" y2="0%">
-              {createGradient()}
+              {createGradient(monthlyData)}
             </linearGradient>
           </defs>
-          
           {/* Background grid lines */}
-          {months.map((_, index) => (
+          {[...Array(12)].map((_, index) => (
             <line
               key={index}
               x1={padding + (index * (width - 2 * padding)) / 11}
@@ -78,17 +79,15 @@ const MonthlyIntensityChart: React.FC<MonthlyIntensityChartProps> = ({
               strokeWidth="1"
             />
           ))}
-          
           {/* Intensity line */}
           <path
-            d={createPath()}
+            d={createPath(monthlyData)}
             fill="none"
             stroke={`url(#gradient-${bloomStartMonth}-${bloomEndMonth})`}
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          
           {/* Data points */}
           {monthlyData.map((intensity, index) => (
             <circle
@@ -102,24 +101,15 @@ const MonthlyIntensityChart: React.FC<MonthlyIntensityChartProps> = ({
             />
           ))}
         </svg>
-        
-        {/* Month labels */}
-        <div className="flex justify-between text-xs text-gray-500 mt-1" style={{ width: width }}>
-          {months.map((month, index) => (
-            <span key={index} className="text-center" style={{ width: '16px' }}>
-              {month}
-            </span>
-          ))}
+        {/* Season emoji row */}
+        <div className="flex justify-between text-xs text-gray-500 mt-1 w-full" style={{ width: width }}>
+          {getSeasonEmojiRow()}
         </div>
-      </div>
-      
-      {/* Season emojis */}
-      <div className="flex space-x-1">
-        {getSeasonEmojis().map((emoji, index) => (
-          <span key={index} className="text-lg">
-            {emoji}
-          </span>
-        ))}
+        {isEmpty && (
+          <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs bg-white/80">
+            אין נתוני עוצמה להצגה
+          </div>
+        )}
       </div>
     </div>
   );

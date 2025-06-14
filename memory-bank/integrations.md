@@ -9,6 +9,7 @@
 - The database is managed and hosted by Supabase, with access via RESTful API and client SDK.
 - Supabase types are used for type safety in service and data layers.
 - The database schema is defined in `src/integrations/supabase/types.ts`.
+- The latest Supabase types are also available in `memory-bank/supabase_types_latest.ts` for up-to-date reference when inserting or updating DB data.
 - All main tables include `created_at` and `updated_at` timestamps for record tracking.
 - Key relationships:
   - `bloom_reports` references `locations` (via `location_id`) and `users` (via `user_id`).
@@ -21,6 +22,7 @@
 - Row Level Security (RLS) is enabled on all main tables, with policies for public read access and authenticated user write access.
 - The schema does not define enums or composite types, but uses check constraints for some fields (e.g., reaction_type).
 - All table operations (insert, update, select) are strongly typed for safety.
+- The upsert-flowers script now fetches and lists all flowers that are actually visible on the map (i.e., have locations and intensity > 0 in flowers_per_location), and prints their bloom months and intensity. This ensures the DB and UI are in sync for flower visibility.
 
 ---
 
