@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -16,7 +15,7 @@ interface MapProps {
 }
 
 // Fix for default marker icons in Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
@@ -35,39 +34,28 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
     
     if (!mapRef.current || leafletMap.current) return;
 
-    try {
-      console.log('Initializing Leaflet map...');
-      
-      // Initialize Leaflet map centered on Israel
-      leafletMap.current = L.map(mapRef.current, {
-        center: [31.5, 34.75],
-        zoom: 8,
-        zoomControl: false,
-        attributionControl: false
-      });
+    // Initialize Leaflet map centered on Israel (more accurate center)
+    leafletMap.current = L.map(mapRef.current, {
+      center: [32, 35], // Geographic center of Israel
+      zoom: 9,
+      zoomControl: false,
+      attributionControl: false
+    });
 
-      console.log('Map created, adding tile layer...');
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '',
+      maxZoom: 19
+    }).addTo(leafletMap.current);
 
-      // Add OpenStreetMap tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '',
-        maxZoom: 19
-      }).addTo(leafletMap.current);
+    // Add zoom control to top-left
+    L.control.zoom({
+      position: 'topleft'
+    }).addTo(leafletMap.current);
 
-      // Add zoom control to top-left
-      L.control.zoom({
-        position: 'topleft'
-      }).addTo(leafletMap.current);
-
-      // Set map as loaded
-      setMapLoaded(true);
-      setMapError(null);
-
-      console.log('Map initialized successfully');
-    } catch (error) {
-      console.error('Error initializing map:', error);
-      setMapError(error instanceof Error ? error.message : 'Failed to initialize map');
-    }
+    // Set map as loaded
+    setMapLoaded(true);
+    setMapError(null);
 
     return () => {
       if (leafletMap.current) {
