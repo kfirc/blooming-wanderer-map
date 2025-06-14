@@ -58,10 +58,10 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
         variant: "destructive",
       });
     },
-    onSettled: ({ flowerId }) => {
+    onSettled: (data, error, variables) => {
       setReactingFlowers(prev => {
         const newSet = new Set(prev);
-        newSet.delete(flowerId);
+        newSet.delete(variables.flowerId);
         return newSet;
       });
     },
