@@ -43,7 +43,7 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
         {/* Heatmap Overlay */}
         <div className="absolute inset-0">
           {reports.map((report) => {
-            const pos = coordinateToPixel(report.location.lat, report.location.lng);
+            const pos = coordinateToPixel(report.location.latitude, report.location.longitude);
             return (
               <div
                 key={`heatmap-${report.id}`}
@@ -59,8 +59,8 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
                   className="w-full h-full rounded-full animate-pulse"
                   style={{
                     background: `radial-gradient(circle, 
-                      rgba(249, 115, 22, ${report.intensity * 0.3}) 0%, 
-                      rgba(168, 85, 247, ${report.intensity * 0.2}) 40%, 
+                      rgba(249, 115, 22, ${report.location.intensity * 0.3}) 0%, 
+                      rgba(168, 85, 247, ${report.location.intensity * 0.2}) 40%, 
                       transparent 70%)`,
                   }}
                 />
@@ -71,7 +71,7 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
 
         {/* Location Pins */}
         {reports.map((report) => {
-          const pos = coordinateToPixel(report.location.lat, report.location.lng);
+          const pos = coordinateToPixel(report.location.latitude, report.location.longitude);
           const isSelected = selectedLocation?.id === report.id;
           
           return (
@@ -97,8 +97,8 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
                 
                 {/* Intensity indicator */}
                 <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
-                  report.intensity > 0.7 ? 'bg-red-500' :
-                  report.intensity > 0.4 ? 'bg-orange-500' : 'bg-yellow-500'
+                  report.location.intensity > 0.7 ? 'bg-red-500' :
+                  report.location.intensity > 0.4 ? 'bg-orange-500' : 'bg-yellow-500'
                 }`} />
               </div>
 
@@ -107,11 +107,11 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
                 <div className="bg-white rounded-lg shadow-lg p-3 min-w-48 border border-gray-200">
                   <div className="flex items-center space-x-2 mb-2">
                     <img 
-                      src={report.reporterPhoto} 
-                      alt={report.reporterName}
+                      src={report.user.profile_photo_url || `https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=24&h=24&fit=crop&crop=face`} 
+                      alt={report.user.display_name}
                       className="w-6 h-6 rounded-full"
                     />
-                    <span className="font-medium text-sm">{report.reporterName}</span>
+                    <span className="font-medium text-sm">{report.user.display_name}</span>
                   </div>
                   <p className="text-xs text-gray-600 mb-2 line-clamp-2">{report.description}</p>
                   <div className="flex items-center justify-between text-xs text-gray-500">
@@ -121,7 +121,7 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
                     </div>
                     <div className="flex items-center space-x-1">
                       <Zap className="h-3 w-3" />
-                      <span>{report.likes}</span>
+                      <span>{report.likes_count}</span>
                     </div>
                   </div>
                 </div>

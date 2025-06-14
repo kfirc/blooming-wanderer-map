@@ -2,8 +2,26 @@
 import React from 'react';
 import { MapPin, Facebook, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useQuery } from '@tanstack/react-query';
+import { bloomReportsService } from '../services/bloomReportsService';
 
 const Header = () => {
+  // Fetch reports and locations for stats
+  const { data: reports = [] } = useQuery({
+    queryKey: ['bloom-reports'],
+    queryFn: bloomReportsService.getRecentReports,
+  });
+
+  const { data: locations = [] } = useQuery({
+    queryKey: ['locations'],
+    queryFn: bloomReportsService.getLocations,
+  });
+
+  // Calculate stats
+  const weeklyReports = reports.length;
+  const activeLocations = locations.filter(loc => loc.intensity > 0).length;
+  const accuracyPercentage = 85; // This could be calculated based on actual data
+
   return (
     <header className="bg-white/95 backdrop-blur-sm border-b border-green-200 shadow-sm z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -24,15 +42,15 @@ const Header = () => {
           {/* Center Stats */}
           <div className="hidden md:flex items-center space-x-8 text-sm">
             <div className="text-center">
-              <div className="font-semibold text-green-700">127</div>
+              <div className="font-semibold text-green-700">{weeklyReports}</div>
               <div className="text-gray-500">דיווחים השבוע</div>
             </div>
             <div className="text-center">
-              <div className="font-semibold text-purple-700">23</div>
+              <div className="font-semibold text-purple-700">{activeLocations}</div>
               <div className="text-gray-500">אזורי פריחה פעילים</div>
             </div>
             <div className="text-center">
-              <div className="font-semibold text-orange-600">85%</div>
+              <div className="font-semibold text-orange-600">{accuracyPercentage}%</div>
               <div className="text-gray-500">דיוק התחזיות</div>
             </div>
           </div>

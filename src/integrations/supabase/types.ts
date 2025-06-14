@@ -9,7 +9,132 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      bloom_reports: {
+        Row: {
+          created_at: string
+          description: string | null
+          facebook_post_id: string | null
+          facebook_post_url: string
+          flower_types: string[] | null
+          id: string
+          images: string[] | null
+          likes_count: number | null
+          location_id: string
+          post_date: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          facebook_post_id?: string | null
+          facebook_post_url: string
+          flower_types?: string[] | null
+          id?: string
+          images?: string[] | null
+          likes_count?: number | null
+          location_id: string
+          post_date: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          facebook_post_id?: string | null
+          facebook_post_url?: string
+          flower_types?: string[] | null
+          id?: string
+          images?: string[] | null
+          likes_count?: number | null
+          location_id?: string
+          post_date?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bloom_reports_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          intensity: number
+          latitude: number
+          longitude: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          intensity?: number
+          latitude: number
+          longitude: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          intensity?: number
+          latitude?: number
+          longitude?: number
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          display_name: string
+          facebook_id: string
+          facebook_username: string
+          id: string
+          profile_photo_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          facebook_id: string
+          facebook_username: string
+          id?: string
+          profile_photo_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          facebook_id?: string
+          facebook_username?: string
+          id?: string
+          profile_photo_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
