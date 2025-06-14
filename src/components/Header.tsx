@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MapPin, Facebook, User } from 'lucide-react';
+import { Flower2, Facebook, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { bloomReportsService } from '../services/bloomReportsService';
@@ -29,7 +29,7 @@ const Header = () => {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-gradient-to-r from-green-500 to-purple-500 rounded-lg">
-              <MapPin className="h-6 w-6 text-white" />
+              <Flower2 className="h-6 w-6 text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-green-700 to-purple-700 bg-clip-text text-transparent">
