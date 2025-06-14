@@ -27,12 +27,17 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
   const heatmapLayerRef = useRef<L.LayerGroup | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   // Initialize map
   useEffect(() => {
+    console.log('Map effect running, mapRef.current:', !!mapRef.current, 'leafletMap.current:', !!leafletMap.current);
+    
     if (!mapRef.current || leafletMap.current) return;
 
     try {
+      console.log('Initializing Leaflet map...');
+      
       // Initialize Leaflet map centered on Israel
       leafletMap.current = L.map(mapRef.current, {
         center: [31.5, 34.75],
@@ -40,6 +45,8 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
         zoomControl: false,
         attributionControl: false
       });
+
+      console.log('Map created, adding tile layer...');
 
       // Add OpenStreetMap tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -57,14 +64,17 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
 
       // Set map as loaded
       setMapLoaded(true);
+      setMapError(null);
 
       console.log('Map initialized successfully');
     } catch (error) {
       console.error('Error initializing map:', error);
+      setMapError(error instanceof Error ? error.message : 'Failed to initialize map');
     }
 
     return () => {
       if (leafletMap.current) {
+        console.log('Cleaning up map...');
         leafletMap.current.remove();
         leafletMap.current = null;
         setMapLoaded(false);
@@ -168,13 +178,24 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
     });
   }, [reports, selectedLocation, onLocationClick, mapLoaded]);
 
+  if (mapError) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-gray-100">
+        <div className="text-center text-gray-600">
+          <p className="mb-2">שגיאה בטעינת המפה</p>
+          <p className="text-sm">{mapError}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 relative">
+    <div className="relative h-full w-full">
       {/* Leaflet Map Container */}
       <div 
         ref={mapRef}
-        className="absolute inset-0 z-10"
-        style={{ height: '100%', width: '100%' }}
+        className="h-full w-full z-10"
+        style={{ minHeight: '400px' }}
       />
 
       {/* Loading indicator */}
@@ -185,7 +206,7 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
       )}
 
       {/* Floating Header Elements */}
-      <div className="absolute top-4 left-4 z-20 flex items-center space-x-3">
+      <div className="absolute top-4 left-4 z-30 flex items-center space-x-3">
         {/* Logo and Title */}
         <div className="flex items-center space-x-2 bg-white/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
           <div className="p-2 bg-gradient-to-r from-green-500 to-purple-500 rounded-full">
@@ -200,7 +221,7 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
       </div>
 
       {/* Floating Action Buttons */}
-      <div className="absolute top-4 right-4 z-20 flex flex-col space-y-3">
+      <div className="absolute top-4 right-4 z-30 flex flex-col space-y-3">
         {/* Facebook Login */}
         <Button 
           size="sm"

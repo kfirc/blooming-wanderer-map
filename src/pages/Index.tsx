@@ -52,8 +52,8 @@ const Index = () => {
   }
 
   return (
-    <div className="h-screen flex bg-gradient-to-br from-green-50 to-purple-50">
-      <div className="flex-1 relative">
+    <div className="h-screen w-full bg-gradient-to-br from-green-50 to-purple-50">
+      <div className="h-full w-full relative">
         <Map 
           reports={reports} 
           onLocationClick={handleLocationClick}
