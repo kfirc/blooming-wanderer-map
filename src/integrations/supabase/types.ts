@@ -72,9 +72,55 @@ export type Database = {
           },
         ]
       }
+      flower_location_reactions: {
+        Row: {
+          created_at: string
+          flower_id: string
+          id: string
+          location_id: string
+          reaction_type: string
+          user_ip: string
+        }
+        Insert: {
+          created_at?: string
+          flower_id: string
+          id?: string
+          location_id: string
+          reaction_type: string
+          user_ip: string
+        }
+        Update: {
+          created_at?: string
+          flower_id?: string
+          id?: string
+          location_id?: string
+          reaction_type?: string
+          user_ip?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flower_location_reactions_flower_id_fkey"
+            columns: ["flower_id"]
+            isOneToOne: false
+            referencedRelation: "flowers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flower_location_reactions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flowers: {
         Row: {
+          bloom_end_day: number | null
+          bloom_end_month: number | null
           bloom_season: string | null
+          bloom_start_day: number | null
+          bloom_start_month: number | null
           created_at: string
           description: string | null
           icon_url: string | null
@@ -83,7 +129,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bloom_end_day?: number | null
+          bloom_end_month?: number | null
           bloom_season?: string | null
+          bloom_start_day?: number | null
+          bloom_start_month?: number | null
           created_at?: string
           description?: string | null
           icon_url?: string | null
@@ -92,7 +142,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bloom_end_day?: number | null
+          bloom_end_month?: number | null
           bloom_season?: string | null
+          bloom_start_day?: number | null
+          bloom_start_month?: number | null
           created_at?: string
           description?: string | null
           icon_url?: string | null
@@ -215,7 +269,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_flower_intensity: {
+        Args: { p_flower_id: string; p_location_id: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

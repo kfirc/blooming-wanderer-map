@@ -94,6 +94,69 @@ export const bloomReportsService = {
     return data || [];
   },
 
+  // Add flower reaction (like/dislike)
+  async addFlowerReaction(flowerId: string, locationId: string, reactionType: 'like' | 'dislike'): Promise<void> {
+    // Get user's IP address (simplified approach)
+    const userIp = await this.getUserIp();
+
+    const { error } = await supabase
+      .from('flower_location_reactions')
+      .upsert({
+        flower_id: flowerId,
+        location_id: locationId,
+        user_ip: userIp,
+        reaction_type: reactionType
+      }, {
+        onConflict: 'flower_id,location_id,user_ip'
+      });
+
+    if (error) {
+      console.error('Error adding flower reaction:', error);
+      throw error;
+    }
+  },
+
+  // Get flower reactions for a specific flower at a location
+  async getFlowerReactions(flowerId: string, locationId: string): Promise<{likes: number, dislikes: number, userReaction?: 'like' | 'dislike'}> {
+    const userIp = await this.getUserIp();
+
+    // Get total likes and dislikes
+    const { data: reactions, error } = await supabase
+      .from('flower_location_reactions')
+      .select('reaction_type, user_ip')
+      .eq('flower_id', flowerId)
+      .eq('location_id', locationId);
+
+    if (error) {
+      console.error('Error fetching flower reactions:', error);
+      throw error;
+    }
+
+    const likes = reactions?.filter(r => r.reaction_type === 'like').length || 0;
+    const dislikes = reactions?.filter(r => r.reaction_type === 'dislike').length || 0;
+    const userReaction = reactions?.find(r => r.user_ip === userIp)?.reaction_type as 'like' | 'dislike' | undefined;
+
+    return { likes, dislikes, userReaction };
+  },
+
+  // Helper function to get user IP (simplified)
+  async getUserIp(): Promise<string> {
+    try {
+      const response = await fetch('https://api.ipify.org?format=json');
+      const data = await response.json();
+      return data.ip;
+    } catch (error) {
+      console.error('Error getting user IP:', error);
+      // Fallback to a random identifier stored in localStorage
+      let userIdentifier = localStorage.getItem('user_identifier');
+      if (!userIdentifier) {
+        userIdentifier = Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('user_identifier', userIdentifier);
+      }
+      return userIdentifier;
+    }
+  },
+
   // Create a new location
   async createLocation(location: Omit<Location, 'id' | 'created_at' | 'updated_at'>): Promise<Location> {
     const { data, error } = await supabase

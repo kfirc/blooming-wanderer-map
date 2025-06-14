@@ -59,6 +59,10 @@ export interface Flower {
   icon_url?: string;
   description?: string;
   bloom_season?: string;
+  bloom_start_month?: number;
+  bloom_end_month?: number;
+  bloom_start_day?: number;
+  bloom_end_day?: number;
   created_at: string;
   updated_at: string;
 }
@@ -74,4 +78,13 @@ export interface FlowerPerLocation {
   
   // Joined data
   flower: Flower;
+}
+
+export interface FlowerReaction {
+  id: string;
+  flower_id: string;
+  location_id: string;
+  user_ip: string;
+  reaction_type: 'like' | 'dislike';
+  created_at: string;
 }
