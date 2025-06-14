@@ -1,0 +1,10 @@
+- The Map component is located at `src/components/Map.tsx`.
+- It uses Leaflet.js to render an interactive map centered on Israel.
+- The map displays bloom reports as custom markers and heatmap circles.
+- Each marker represents a bloom report location and is clickable.
+- Clicking a marker triggers a callback with the selected report.
+- Markers visually indicate selection and report intensity.
+- The map includes a heatmap layer to visualize bloom intensity.
+- Marker popups show user info, description, image count, and likes.
+- The component receives reports, a selection callback, and the selected report as props.
+- The map uses OpenStreetMap tiles for its base layer. 

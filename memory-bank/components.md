@@ -1,0 +1,5 @@
+- Main UI components are located in `src/components/`.
+- `Sidebar.tsx` provides navigation or filtering options for the app.
+- `Header.tsx` displays the app title or navigation bar.
+- `ImageGallery.tsx` displays images related to bloom reports.
+- Components are designed for modularity and reuse in the UI. 
