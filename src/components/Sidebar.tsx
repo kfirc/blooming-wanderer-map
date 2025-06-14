@@ -12,19 +12,20 @@ interface SidebarProps {
   selectedLocation: BloomReport | null;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, reports, selectedLocation }) => {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 1) return 'היום';
-    if (diffDays === 2) return 'אתמול';
-    if (diffDays <= 7) return `לפני ${diffDays} ימים`;
-    return date.toLocaleDateString('he-IL');
-  };
+// Move formatDate function outside of component scope so it can be accessed by LocationCard
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - date.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 1) return 'היום';
+  if (diffDays === 2) return 'אתמול';
+  if (diffDays <= 7) return `לפני ${diffDays} ימים`;
+  return date.toLocaleDateString('he-IL');
+};
 
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, reports, selectedLocation }) => {
   return (
     <>
       {/* Mobile Overlay */}
