@@ -6,20 +6,20 @@ import { useQuery } from '@tanstack/react-query';
 import { bloomReportsService } from '../services/bloomReportsService';
 
 const Header = () => {
-  // Fetch reports and locations for stats
+  // Fetch reports and flowers data for stats
   const { data: reports = [] } = useQuery({
     queryKey: ['bloom-reports'],
     queryFn: bloomReportsService.getRecentReports,
   });
 
-  const { data: locations = [] } = useQuery({
-    queryKey: ['locations'],
-    queryFn: bloomReportsService.getLocations,
+  const { data: flowers = [] } = useQuery({
+    queryKey: ['flowers'],
+    queryFn: bloomReportsService.getFlowers,
   });
 
   // Calculate stats
   const weeklyReports = reports.length;
-  const activeLocations = locations.filter(loc => loc.intensity > 0).length;
+  const activeFlowerTypes = flowers.length;
   const accuracyPercentage = 85; // This could be calculated based on actual data
 
   return (
@@ -46,8 +46,8 @@ const Header = () => {
               <div className="text-gray-500">דיווחים השבוע</div>
             </div>
             <div className="text-center">
-              <div className="font-semibold text-purple-700">{activeLocations}</div>
-              <div className="text-gray-500">אזורי פריחה פעילים</div>
+              <div className="font-semibold text-purple-700">{activeFlowerTypes}</div>
+              <div className="text-gray-500">סוגי פרחים</div>
             </div>
             <div className="text-center">
               <div className="font-semibold text-orange-600">{accuracyPercentage}%</div>

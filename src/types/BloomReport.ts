@@ -52,3 +52,26 @@ export interface User {
   created_at: string;
   updated_at: string;
 }
+
+export interface Flower {
+  id: string;
+  name: string;
+  icon_url?: string;
+  description?: string;
+  bloom_season?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FlowerPerLocation {
+  id: string;
+  location_id: string;
+  flower_id: string;
+  intensity: number;
+  last_updated: string;
+  created_at: string;
+  updated_at: string;
+  
+  // Joined data
+  flower: Flower;
+}

@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { BloomReport, Location, User } from '@/types/BloomReport';
+import { BloomReport, Location, User, Flower, FlowerPerLocation } from '@/types/BloomReport';
 
 export const bloomReportsService = {
   // Fetch all bloom reports with location and user data
@@ -54,6 +54,40 @@ export const bloomReportsService = {
 
     if (error) {
       console.error('Error fetching locations:', error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
+  // Fetch all flowers
+  async getFlowers(): Promise<Flower[]> {
+    const { data, error } = await supabase
+      .from('flowers')
+      .select('*')
+      .order('name');
+
+    if (error) {
+      console.error('Error fetching flowers:', error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
+  // Fetch flowers for a specific location
+  async getFlowersForLocation(locationId: string): Promise<FlowerPerLocation[]> {
+    const { data, error } = await supabase
+      .from('flowers_per_location')
+      .select(`
+        *,
+        flower:flowers(*)
+      `)
+      .eq('location_id', locationId)
+      .order('intensity', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching flowers for location:', error);
       throw error;
     }
 

@@ -1,9 +1,10 @@
 
-import React from 'react';
-import { X, Calendar, Heart, Camera, Navigation, ExternalLink } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Calendar, Heart, Camera, Navigation, ExternalLink, Flower2, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BloomReport } from '../types/BloomReport';
 import ImageGallery from './ImageGallery';
+import FlowersList from './FlowersList';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -26,6 +27,8 @@ const formatDate = (dateString: string) => {
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, reports, selectedLocation }) => {
+  const [showReports, setShowReports] = useState(false);
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -63,8 +66,44 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, reports, selectedLoc
           <div className="flex-1 overflow-y-auto">
             {selectedLocation ? (
               /* Single Location View */
-              <div className="p-4">
-                <LocationCard report={selectedLocation} isDetailed={true} />
+              <div>
+                {/* Flowers Section */}
+                <FlowersList 
+                  locationId={selectedLocation.location.id} 
+                  locationName={selectedLocation.location.name}
+                />
+                
+                {/* Toggle Reports Button */}
+                <div className="p-4 border-t border-gray-200">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowReports(!showReports)}
+                    className="w-full flex items-center justify-center space-x-2"
+                  >
+                    <span>{showReports ? 'הסתר דיווחים' : 'הצג דיווחים'}</span>
+                    <ArrowDown className={`h-4 w-4 transition-transform ${showReports ? 'rotate-180' : ''}`} />
+                  </Button>
+                </div>
+
+                {/* Reports Section */}
+                {showReports && (
+                  <div className="p-4 pt-0">
+                    <div className="space-y-4">
+                      {reports.filter(report => report.location.id === selectedLocation.location.id).length > 0 ? (
+                        reports
+                          .filter(report => report.location.id === selectedLocation.location.id)
+                          .map((report) => (
+                            <LocationCard key={report.id} report={report} isDetailed={true} />
+                          ))
+                      ) : (
+                        <div className="text-center text-gray-600 py-8">
+                          <Camera className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                          <p>אין דיווחים עבור מיקום זה</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               /* All Reports List */

@@ -72,6 +72,81 @@ export type Database = {
           },
         ]
       }
+      flowers: {
+        Row: {
+          bloom_season: string | null
+          created_at: string
+          description: string | null
+          icon_url: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          bloom_season?: string | null
+          created_at?: string
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          bloom_season?: string | null
+          created_at?: string
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      flowers_per_location: {
+        Row: {
+          created_at: string
+          flower_id: string
+          id: string
+          intensity: number
+          last_updated: string
+          location_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          flower_id: string
+          id?: string
+          intensity?: number
+          last_updated?: string
+          location_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          flower_id?: string
+          id?: string
+          intensity?: number
+          last_updated?: string
+          location_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flowers_per_location_flower_id_fkey"
+            columns: ["flower_id"]
+            isOneToOne: false
+            referencedRelation: "flowers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flowers_per_location_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           created_at: string
