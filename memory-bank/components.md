@@ -2,4 +2,10 @@
 - `Sidebar.tsx` provides navigation or filtering options for the app.
 - `Header.tsx` displays the app title or navigation bar.
 - `ImageGallery.tsx` displays images related to bloom reports.
-- Components are designed for modularity and reuse in the UI. 
+- Components are designed for modularity and reuse in the UI.
+- `Sidebar.tsx` now receives its open state, mode (`'location'` or `'info'`), and data as props from the main page. It displays either location details (including flowers and reports) or info content, depending on mode.
+- The sidebar opens immediately when a location is clicked, and shows a loading spinner for flowers until the data is loaded.
+- `FlowersList.tsx` receives its data and loading state as props, and no longer fetches data internally.
+- The reports section in the sidebar shows a loading spinner if reports are loading (placeholder for now).
+- `MapHeader.tsx` receives an `onInfoClick` prop, which opens the sidebar in info mode when triggered.
+- The sidebar content resets to default only after the close animation completes (300ms delay). 

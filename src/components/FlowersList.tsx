@@ -7,36 +7,33 @@ import { useToast } from '@/hooks/use-toast';
 import SignalStrength from './SignalStrength';
 import GlowingIcon from './GlowingIcon';
 import MonthlyIntensityChart from './MonthlyIntensityChart';
-import { Flower } from '../types/BloomReport';
+import { Flower, FlowerPerLocation } from '../types/BloomReport';
 
 interface FlowersListProps {
   locationId: string;
   locationName: string;
+  flowersPerLocation: FlowerPerLocation[];
+  isLoading: boolean;
+  error: unknown;
 }
 
-const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) => {
+const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName, flowersPerLocation, isLoading, error }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [reactingFlowers, setReactingFlowers] = useState<Set<string>>(new Set());
   const [selectedFlowerId, setSelectedFlowerId] = useState<string | null>(null);
-
-  const { data: flowers = [], isLoading, error } = useQuery({
-    queryKey: ['flowers-per-location', locationId],
-    queryFn: () => bloomReportsService.getFlowersForLocation(locationId),
-    enabled: !!locationId,
-  });
 
   // Fetch reactions for all flowers
   const { data: reactionsData = {} } = useQuery({
     queryKey: ['flower-reactions', locationId],
     queryFn: async () => {
       const reactions: Record<string, {likes: number, dislikes: number, userReaction?: 'like' | 'dislike'}> = {};
-      for (const flowerData of flowers) {
+      for (const flowerData of flowersPerLocation) {
         reactions[flowerData.flower.id] = await bloomReportsService.getFlowerReactions(flowerData.flower.id, locationId);
       }
       return reactions;
     },
-    enabled: flowers.length > 0,
+    enabled: flowersPerLocation.length > 0,
   });
 
   const reactionMutation = useMutation({
@@ -171,7 +168,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
     );
   }
 
-  if (flowers.length === 0) {
+  if (flowersPerLocation.length === 0) {
     return (
       <div className="p-6 text-center text-gray-600">
         <Flower2 className="h-8 w-8 mx-auto mb-2 text-gray-400" />
@@ -181,7 +178,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
   }
 
   // Find selected flower (default to first)
-  const selectedFlowerData = flowers.find(f => f.flower.id === selectedFlowerId) || flowers[0];
+  const selectedFlowerData = flowersPerLocation.find(f => f.flower.id === selectedFlowerId) || flowersPerLocation[0];
   const selectedMonthlyData = selectedFlowerData ? generateMonthlyData(selectedFlowerData.flower, selectedFlowerData.intensity) : new Array(12).fill(0);
 
   return (
@@ -195,7 +192,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
         />
       </div>
       <div className="space-y-4">
-        {flowers.map((flowerData) => {
+        {flowersPerLocation.map((flowerData) => {
           const reactions = reactionsData[flowerData.flower.id] || { likes: 0, dislikes: 0 };
           const isReacting = reactingFlowers.has(flowerData.flower.id);
           const inSeason = isFlowerInSeason(flowerData.flower);

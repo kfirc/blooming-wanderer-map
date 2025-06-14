@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Map from '../components/Map';
 import Sidebar from '../components/Sidebar';
-import { BloomReport } from '../types/BloomReport';
+import { BloomReport, FlowerPerLocation } from '../types/BloomReport';
 import { bloomReportsService } from '../services/bloomReportsService';
 import { Loader2 } from 'lucide-react';
+import MapHeader from '../components/MapHeader';
 
 const Index = () => {
   const [selectedLocation, setSelectedLocation] = useState<BloomReport | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarMode, setSidebarMode] = useState<'location' | 'info'>('location');
 
   // Fetch bloom reports using React Query
   const { data: reports = [], isLoading, error } = useQuery({
@@ -17,8 +19,21 @@ const Index = () => {
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
+  // Fetch flowers for selected location
+  const {
+    data: flowersPerLocation = [],
+    isLoading: flowersLoading,
+    error: flowersError,
+  } = useQuery<FlowerPerLocation[], unknown>({
+    queryKey: ['flowers-per-location', selectedLocation?.location.id],
+    queryFn: () => selectedLocation ? bloomReportsService.getFlowersForLocation(selectedLocation.location.id) : Promise.resolve([]),
+    enabled: !!selectedLocation && sidebarOpen && sidebarMode === 'location',
+    staleTime: 5 * 60 * 1000,
+  });
+
   const handleLocationClick = (report: BloomReport) => {
     setSelectedLocation(report);
+    setSidebarMode('location');
     setSidebarOpen(true);
   };
 
@@ -36,9 +51,17 @@ const Index = () => {
     if (!sidebarOpen) {
       // Don't clear selectedLocation when opening
     } else {
-      // Clear selectedLocation when closing
-      setTimeout(() => setSelectedLocation(null), 300);
+      // Clear selectedLocation and reset mode when closing, after animation
+      setTimeout(() => {
+        setSelectedLocation(null);
+        setSidebarMode('location');
+      }, 300);
     }
+  };
+
+  const handleInfoClick = () => {
+    setSidebarMode('info');
+    setSidebarOpen(true);
   };
 
   if (isLoading) {
@@ -76,7 +99,12 @@ const Index = () => {
           onToggle={handleToggleSidebar}
           reports={selectedLocation ? [selectedLocation] : reports}
           selectedLocation={selectedLocation}
+          sidebarMode={sidebarMode}
+          flowersPerLocation={flowersPerLocation}
+          flowersLoading={flowersLoading}
+          flowersError={flowersError}
         />
+        <MapHeader onInfoClick={handleInfoClick} />
       </div>
     </div>
   );

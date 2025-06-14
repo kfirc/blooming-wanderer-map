@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { BloomReport } from '../types/BloomReport';
 
@@ -18,6 +18,7 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
   mapLoaded
 }) => {
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
+  const [currentZoom, setCurrentZoom] = useState<number>(13);
 
   // Helper to create marker icon HTML and size
   const getMarkerIcon = (report, isSelected, zoom) => {
@@ -25,28 +26,42 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
     const maxSize = 40;
     const scale = Math.pow(2, (zoom - 9) / 2); // 9 is default zoom
     const size = Math.min(Math.round(baseSize * scale), maxSize);
-    const flowerTags = report.flower_types.slice(0, 3).map(flower => 
-      `<span class="flower-tag">${flower}</span>`
-    ).join('');
+    // const flowerTags = report.flower_types.slice(0, 3).map(flower => 
+    //   `<span class="flower-tag">${flower}</span>`
+    // ).join('');
     const color = report.location.intensity > 0.7 ? '#ef4444' : report.location.intensity > 0.4 ? '#f97316' : '#eab308';
     return L.divIcon({
       html: `
-        <div class="relative transform -translate-x-1/2 -translate-y-1/2">
-          <div class="rounded-full border-3 shadow-lg flex items-center justify-center transition-all duration-200 ${
-            isSelected 
-              ? 'bg-orange-500 border-white scale-125' 
-              : 'bg-white border-purple-400 hover:border-purple-600'
-          }" style="background-color: ${color}; border-color: white; width: ${size}px; height: ${size}px;">
-            <svg class="text-white" width="${Math.round(size/2)}" height="${Math.round(size/2)}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-          ${flowerTags ? `<div class="flower-tags-container">${flowerTags}</div>` : ''}
+        <div class="relative flex flex-col items-center transform -translate-x-1/2 -translate-y-1/2">
+          <svg width="200" height="80" viewBox="0 0 200 80" style="position: absolute; top: -20px; left: 15%; transform: translateX(-50%); pointer-events: none;">
+            <defs>
+              <path id="arcPath" d="M 40,60 A 60,60 0 0,1 160,100" fill="none" />
+            </defs>
+            ${zoom >= 10 ? `
+            <text font-size="15" font-weight="bold" fill="black" text-anchor="middle" font-family="Helvetica">
+              <textPath href="#arcPath" startOffset="50%">
+                ${report.location.name}
+              </textPath>
+            </text>
+            ` : ''}
+          </svg>
+          <div style="
+            background-color: ${color};
+            opacity: 0.7;
+            width: ${size}px;
+            height: ${size}px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border: 3px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 18px;
+          "></div>
         </div>
       `,
       className: 'custom-bloom-marker',
-      iconSize: [size, size + 20],
+      iconSize: [size, size + 40],
       iconAnchor: [size / 2, size],
     });
   };
@@ -54,11 +69,14 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
   useEffect(() => {
     if (!map || !mapLoaded) return;
 
+    setCurrentZoom(map.getZoom());
+
     console.log('Updating markers with reports:', reports.length);
 
     // Helper to update all marker icons on zoom
     const updateMarkerIcons = () => {
       const zoom = map.getZoom();
+      setCurrentZoom(zoom);
       Object.entries(markersRef.current).forEach(([id, marker]) => {
         const report = reports.find(r => r.id === id);
         if (report) {

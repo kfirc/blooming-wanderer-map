@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, Heart, Camera, Navigation, ExternalLink, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Calendar, Heart, Camera, Navigation, ExternalLink, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BloomReport } from '../types/BloomReport';
+import { BloomReport, FlowerPerLocation } from '../types/BloomReport';
 import ImageGallery from './ImageGallery';
 import FlowersList from './FlowersList';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +12,10 @@ interface SidebarProps {
   onToggle: () => void;
   reports: BloomReport[];
   selectedLocation: BloomReport | null;
+  sidebarMode: 'location' | 'info';
+  flowersPerLocation: FlowerPerLocation[];
+  flowersLoading: boolean;
+  flowersError: unknown;
 }
 
 // Move formatDate function outside of component scope so it can be accessed by LocationCard
@@ -49,11 +53,14 @@ const LocationDrawerHeader: React.FC<{ selectedLocation: BloomReport['location']
   );
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, reports, selectedLocation }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, reports, selectedLocation, sidebarMode, flowersPerLocation, flowersLoading, flowersError }) => {
   const [offset, setOffset] = useState(0);
   const [allReports, setAllReports] = useState<BloomReport[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Placeholder for reports loading state
+  const reportsLoading = false;
 
   // Load more reports with pagination
   const loadMoreReports = useCallback(async () => {
@@ -129,19 +136,32 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, reports, selectedLo
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto" onScroll={handleScroll}>
-            {selectedLocation ? (
+            {sidebarMode === 'info' ? (
+              <div className="p-8 text-center text-gray-700">
+                <h2 className="text-xl font-bold mb-4">מידע על הדף</h2>
+                <p>כאן יוצג מידע על הדף, מטרותיו, והסבר קצר על השימוש במפה ובדיווחי הפריחה.</p>
+              </div>
+            ) : selectedLocation ? (
               /* Single Location View */
               <div>
                 {/* Flowers Section */}
                 <FlowersList 
                   locationId={selectedLocation.location.id} 
                   locationName={selectedLocation.location.name}
+                  flowersPerLocation={flowersPerLocation}
+                  isLoading={flowersLoading}
+                  error={flowersError}
                 />
                 
                 {/* Reports Section - Always shown */}
                 <div className="p-4 border-t border-gray-200">
                   <div className="space-y-4">
-                    {reports.filter(report => report.location.id === selectedLocation.location.id).length > 0 ? (
+                    {reportsLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
+                        <span className="ml-2 text-gray-600">טוען דיווחים...</span>
+                      </div>
+                    ) : reports.filter(report => report.location.id === selectedLocation.location.id).length > 0 ? (
                       reports
                         .filter(report => report.location.id === selectedLocation.location.id)
                         .map((report) => (

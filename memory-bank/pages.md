@@ -1,4 +1,5 @@
 - Main pages are located in `src/pages/`.
 - `Index.tsx` is the main entry page of the app.
 - `NotFound.tsx` handles 404 or unknown routes.
-- Pages define the main navigation and routing structure. 
+- Pages define the main navigation and routing structure.
+- `Index.tsx` manages the sidebar open state, mode (`'location'` or `'info'`), and data fetching for both location and info drawer modes. It coordinates when the sidebar opens and what content is shown, and passes all relevant props to Sidebar and MapHeader. 
