@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import SignalStrength from './SignalStrength';
 import GlowingIcon from './GlowingIcon';
 import MonthlyIntensityChart from './MonthlyIntensityChart';
+import { Flower } from '../types/BloomReport';
 
 interface FlowersListProps {
   locationId: string;
@@ -17,6 +18,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [reactingFlowers, setReactingFlowers] = useState<Set<string>>(new Set());
+  const [selectedFlowerId, setSelectedFlowerId] = useState<string | null>(null);
 
   const { data: flowers = [], isLoading, error } = useQuery({
     queryKey: ['flowers-per-location', locationId],
@@ -74,7 +76,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
   };
 
   // Generate sample monthly data based on bloom season
-  const generateMonthlyData = (flower: any, intensity: number) => {
+  const generateMonthlyData = (flower: Flower, intensity: number) => {
     const data = new Array(12).fill(0);
     if (flower.bloom_start_month && flower.bloom_end_month) {
       const start = flower.bloom_start_month - 1; // Convert to 0-based index
@@ -106,7 +108,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
     return data;
   };
 
-  const formatBloomSeason = (flower: any) => {
+  const formatBloomSeason = (flower: Flower) => {
     if (flower.bloom_start_month && flower.bloom_end_month) {
       const monthNames = [
         'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
@@ -124,7 +126,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
     return flower.bloom_season;
   };
 
-  const isFlowerInSeason = (flower: any) => {
+  const isFlowerInSeason = (flower: Flower) => {
     if (!flower.bloom_start_month || !flower.bloom_end_month) return false;
     
     const now = new Date();
@@ -178,93 +180,84 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
     );
   }
 
+  // Find selected flower (default to first)
+  const selectedFlowerData = flowers.find(f => f.flower.id === selectedFlowerId) || flowers[0];
+  const selectedMonthlyData = selectedFlowerData ? generateMonthlyData(selectedFlowerData.flower, selectedFlowerData.intensity) : new Array(12).fill(0);
+
   return (
-    <div className="p-4">      
+    <div className="p-4">
+      {/* Single MonthlyIntensityChart at the top */}
+      <div className="mb-6 flex justify-center">
+        <MonthlyIntensityChart
+          monthlyData={selectedMonthlyData}
+          bloomStartMonth={selectedFlowerData?.flower.bloom_start_month}
+          bloomEndMonth={selectedFlowerData?.flower.bloom_end_month}
+        />
+      </div>
       <div className="space-y-4">
         {flowers.map((flowerData) => {
           const reactions = reactionsData[flowerData.flower.id] || { likes: 0, dislikes: 0 };
           const isReacting = reactingFlowers.has(flowerData.flower.id);
           const inSeason = isFlowerInSeason(flowerData.flower);
-          const monthlyData = generateMonthlyData(flowerData.flower, flowerData.intensity);
-          
-          return (
-            <div 
-              key={flowerData.id} 
-              className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4 text-right"
-            >
-              <div className="flex flex-row-reverse items-center justify-between gap-x-4">
-                <div className="flex flex-row-reverse items-center gap-x-3">
-                  <div className="relative ml-2">
-                    {flowerData.flower.icon_url ? (
-                      <img 
-                        src={flowerData.flower.icon_url} 
-                        alt={flowerData.flower.name}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-purple-200"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-purple-400 flex items-center justify-center">
-                        <Flower2 className="h-5 w-5 text-white" />
-                      </div>
-                    )}
-                    <GlowingIcon 
-                      isInSeason={inSeason} 
-                      className="absolute -top-1 -right-1"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-800">{flowerData.flower.name}</h4>
-                    {flowerData.flower.description && (
-                      <p className="text-xs text-gray-600">{flowerData.flower.description}</p>
-                    )}
-                    {formatBloomSeason(flowerData.flower) && (
-                      <p className="text-xs text-purple-600">{formatBloomSeason(flowerData.flower)}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex flex-row-reverse items-center gap-x-3 text-left">
-                  <SignalStrength intensity={flowerData.intensity} />
-                  {inSeason && (
-                    <span className="text-xs text-green-600 font-medium">פורח כעת</span>
-                  )}
-                </div>
-              </div>
+          // const monthlyData = generateMonthlyData(flowerData.flower, flowerData.intensity); // No longer needed here
 
-              {/* Monthly Intensity Chart */}
-              <div className="flex justify-center items-center bg-white rounded-lg p-3 border border-gray-100">
-                <MonthlyIntensityChart 
-                  monthlyData={monthlyData}
-                  bloomStartMonth={flowerData.flower.bloom_start_month}
-                  bloomEndMonth={flowerData.flower.bloom_end_month}
+          return (
+            <div
+              key={flowerData.id}
+              className={`p-3 bg-gray-50 rounded-lg border border-gray-200 text-right flex items-center gap-x-3 transition-colors duration-150 ${selectedFlowerId === flowerData.flower.id ? 'ring-2 ring-purple-400' : ''}`}
+              onMouseEnter={() => setSelectedFlowerId(flowerData.flower.id)}
+              onClick={() => setSelectedFlowerId(flowerData.flower.id)}
+              style={{ cursor: 'pointer' }}
+            >
+              {/* Flower icon */}
+              <div className="relative">
+                {flowerData.flower.icon_url ? (
+                  <img
+                    src={flowerData.flower.icon_url}
+                    alt={flowerData.flower.name}
+                    className="w-10 h-10 rounded-full object-cover border-2 border-purple-200"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-purple-400 flex items-center justify-center">
+                    <Flower2 className="h-5 w-5 text-white" />
+                  </div>
+                )}
+                <GlowingIcon
+                  isInSeason={inSeason}
+                  className="absolute -top-1 -right-1"
                 />
               </div>
-
-              {/* Reaction buttons */}
-              <div className="flex flex-row-reverse items-center justify-between pt-3 border-t border-gray-200">
-                <div className="flex flex-row-reverse items-center gap-x-4">
-                  <Button
-                    variant={reactions.userReaction === 'like' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleReaction(flowerData.flower.id, 'like')}
-                    disabled={isReacting}
-                    className="flex items-center space-x-1 text-xs"
-                  >
-                    <ThumbsUp className="h-3 w-3" />
-                    <span>{reactions.likes}</span>
-                  </Button>
-                  
-                  <Button
-                    variant={reactions.userReaction === 'dislike' ? 'destructive' : 'outline'}
-                    size="sm"
-                    onClick={() => handleReaction(flowerData.flower.id, 'dislike')}
-                    disabled={isReacting}
-                    className="flex items-center space-x-1 text-xs"
-                  >
-                    <ThumbsDown className="h-3 w-3" />
-                    <span>{reactions.dislikes}</span>
-                  </Button>
-                </div>
+              {/* Flower name and in-season badge */}
+              <div className="flex flex-col items-end flex-1 min-w-0">
+                <span className="font-medium text-gray-800 truncate max-w-[120px]">{flowerData.flower.name}</span>
+                {inSeason && (
+                  <span className="text-xs text-green-600 font-medium">פורח כעת</span>
+                )}
+              </div>
+              {/* Like/Dislike buttons */}
+              <div className="flex flex-row-reverse items-center gap-x-2">
+                <Button
+                  variant={reactions.userReaction === 'like' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={e => { e.stopPropagation(); handleReaction(flowerData.flower.id, 'like'); }}
+                  disabled={isReacting}
+                  className="flex items-center space-x-1 text-xs"
+                >
+                  <ThumbsUp className="h-3 w-3" />
+                  <span>{reactions.likes}</span>
+                </Button>
+                <Button
+                  variant={reactions.userReaction === 'dislike' ? 'destructive' : 'outline'}
+                  size="sm"
+                  onClick={e => { e.stopPropagation(); handleReaction(flowerData.flower.id, 'dislike'); }}
+                  disabled={isReacting}
+                  className="flex items-center space-x-1 text-xs"
+                >
+                  <ThumbsDown className="h-3 w-3" />
+                  <span>{reactions.dislikes}</span>
+                </Button>
                 {isReacting && (
-                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400 ml-2" />
                 )}
               </div>
             </div>
