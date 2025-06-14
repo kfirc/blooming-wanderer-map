@@ -26,43 +26,57 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
   const leafletMap = useRef<L.Map | null>(null);
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
   const heatmapLayerRef = useRef<L.LayerGroup | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
+  // Initialize map
   useEffect(() => {
     if (!mapRef.current || leafletMap.current) return;
 
-    // Initialize Leaflet map centered on Israel
-    leafletMap.current = L.map(mapRef.current, {
-      center: [31.5, 34.75],
-      zoom: 8,
-      zoomControl: false,
-      attributionControl: false // Remove attribution control
-    });
+    try {
+      // Initialize Leaflet map centered on Israel
+      leafletMap.current = L.map(mapRef.current, {
+        center: [31.5, 34.75],
+        zoom: 8,
+        zoomControl: false,
+        attributionControl: false
+      });
 
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '', // Remove attribution
-      maxZoom: 19
-    }).addTo(leafletMap.current);
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '',
+        maxZoom: 19
+      }).addTo(leafletMap.current);
 
-    // Add zoom control to top-left
-    L.control.zoom({
-      position: 'topleft'
-    }).addTo(leafletMap.current);
+      // Add zoom control to top-left
+      L.control.zoom({
+        position: 'topleft'
+      }).addTo(leafletMap.current);
 
-    // Initialize heatmap layer
-    heatmapLayerRef.current = L.layerGroup().addTo(leafletMap.current);
+      // Initialize heatmap layer
+      heatmapLayerRef.current = L.layerGroup().addTo(leafletMap.current);
+
+      // Set map as loaded
+      setMapLoaded(true);
+
+      console.log('Map initialized successfully');
+    } catch (error) {
+      console.error('Error initializing map:', error);
+    }
 
     return () => {
       if (leafletMap.current) {
         leafletMap.current.remove();
         leafletMap.current = null;
+        setMapLoaded(false);
       }
     };
   }, []);
 
   // Update markers when reports change
   useEffect(() => {
-    if (!leafletMap.current || !heatmapLayerRef.current) return;
+    if (!leafletMap.current || !heatmapLayerRef.current || !mapLoaded) return;
+
+    console.log('Updating markers with reports:', reports.length);
 
     // Clear existing markers and heatmap
     Object.values(markersRef.current).forEach(marker => marker.remove());
@@ -152,49 +166,7 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
 
       markersRef.current[report.id] = marker;
     });
-  }, [reports, selectedLocation, onLocationClick]);
-
-  // Update selected marker style
-  useEffect(() => {
-    if (!selectedLocation) return;
-
-    // Update all markers to show selected state
-    Object.entries(markersRef.current).forEach(([reportId, marker]) => {
-      const isSelected = reportId === selectedLocation.id;
-      const report = reports.find(r => r.id === reportId);
-      if (!report) return;
-
-      const intensity = report.location.intensity;
-      const color = intensity > 0.7 ? '#ef4444' : intensity > 0.4 ? '#f97316' : '#eab308';
-      
-      const flowerTags = report.flower_types.slice(0, 3).map(flower => 
-        `<span class="flower-tag">${flower}</span>`
-      ).join('');
-
-      const markerIcon = L.divIcon({
-        html: `
-          <div class="relative transform -translate-x-1/2 -translate-y-1/2">
-            <div class="w-10 h-10 rounded-full border-3 shadow-lg flex items-center justify-center transition-all duration-200 ${
-              isSelected 
-                ? 'bg-orange-500 border-white scale-125' 
-                : 'bg-white border-purple-400 hover:border-purple-600'
-            }" style="background-color: ${color}; border-color: white;">
-              <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-            ${flowerTags ? `<div class="flower-tags-container">${flowerTags}</div>` : ''}
-          </div>
-        `,
-        className: 'custom-bloom-marker',
-        iconSize: [40, 60],
-        iconAnchor: [20, 50],
-      });
-
-      marker.setIcon(markerIcon);
-    });
-  }, [selectedLocation, reports]);
+  }, [reports, selectedLocation, onLocationClick, mapLoaded]);
 
   return (
     <div className="flex-1 relative">
@@ -202,7 +174,15 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
       <div 
         ref={mapRef}
         className="absolute inset-0 z-10"
+        style={{ height: '100%', width: '100%' }}
       />
+
+      {/* Loading indicator */}
+      {!mapLoaded && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-gray-100">
+          <div className="text-gray-600">טוען מפה...</div>
+        </div>
+      )}
 
       {/* Floating Header Elements */}
       <div className="absolute top-4 left-4 z-20 flex items-center space-x-3">
