@@ -1,29 +1,45 @@
 
-/* Custom styles for Leaflet markers */
+/* Leaflet map custom styles */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
 .custom-bloom-marker {
   background: transparent !important;
   border: none !important;
 }
 
-.custom-bloom-marker div {
-  background: transparent;
+.flower-tags-container {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  justify-content: center;
+  max-width: 120px;
+  margin-top: 4px;
 }
 
-/* Ensure Leaflet controls have proper z-index */
-.leaflet-control-zoom {
-  z-index: 1000;
-}
-
-.leaflet-popup-content-wrapper {
+.flower-tag {
+  background: rgba(139, 69, 19, 0.9);
+  color: white;
+  font-size: 8px;
+  font-weight: 500;
+  padding: 1px 4px;
   border-radius: 8px;
+  white-space: nowrap;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.3);
 }
 
-.leaflet-popup-content {
-  margin: 8px 12px;
-  line-height: 1.4;
+/* Ensure leaflet controls don't interfere */
+.leaflet-control-container {
+  pointer-events: none;
 }
 
-/* Fix for marker shadows */
-.leaflet-marker-shadow {
-  display: none;
+.leaflet-control {
+  pointer-events: auto;
 }

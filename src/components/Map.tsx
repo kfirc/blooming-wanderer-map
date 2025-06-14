@@ -3,8 +3,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './LeafletMap.css';
-import { MapPin, Zap, Camera } from 'lucide-react';
+import { MapPin, Zap, Camera, Flower2, Facebook, User } from 'lucide-react';
 import { BloomReport } from '../types/BloomReport';
+import { Button } from '@/components/ui/button';
 
 interface MapProps {
   reports: BloomReport[];
@@ -33,12 +34,13 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
     leafletMap.current = L.map(mapRef.current, {
       center: [31.5, 34.75],
       zoom: 8,
-      zoomControl: false
+      zoomControl: false,
+      attributionControl: false // Remove attribution control
     });
 
     // Add OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
+      attribution: '', // Remove attribution
       maxZoom: 19
     }).addTo(leafletMap.current);
 
@@ -86,30 +88,32 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
       
       heatmapLayerRef.current!.addLayer(heatCircle);
 
-      // Create custom marker icon
+      // Create flower tags for this location
+      const flowerTags = report.flower_types.slice(0, 3).map(flower => 
+        `<span class="flower-tag">${flower}</span>`
+      ).join('');
+
+      // Create custom marker icon with flower tags
       const isSelected = selectedLocation?.id === report.id;
       const markerIcon = L.divIcon({
         html: `
           <div class="relative transform -translate-x-1/2 -translate-y-1/2">
-            <div class="w-8 h-8 rounded-full border-3 shadow-lg flex items-center justify-center transition-all duration-200 ${
+            <div class="w-10 h-10 rounded-full border-3 shadow-lg flex items-center justify-center transition-all duration-200 ${
               isSelected 
                 ? 'bg-orange-500 border-white scale-125' 
                 : 'bg-white border-purple-400 hover:border-purple-600'
-            }">
-              <svg class="h-4 w-4 ${isSelected ? 'text-white' : 'text-purple-600'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            }" style="background-color: ${color}; border-color: white;">
+              <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <div class="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
-              intensity > 0.7 ? 'bg-red-500' :
-              intensity > 0.4 ? 'bg-orange-500' : 'bg-yellow-500'
-            }"></div>
+            ${flowerTags ? `<div class="flower-tags-container">${flowerTags}</div>` : ''}
           </div>
         `,
         className: 'custom-bloom-marker',
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
+        iconSize: [40, 60],
+        iconAnchor: [20, 50],
       });
 
       // Create marker
@@ -161,28 +165,31 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
       if (!report) return;
 
       const intensity = report.location.intensity;
+      const color = intensity > 0.7 ? '#ef4444' : intensity > 0.4 ? '#f97316' : '#eab308';
+      
+      const flowerTags = report.flower_types.slice(0, 3).map(flower => 
+        `<span class="flower-tag">${flower}</span>`
+      ).join('');
+
       const markerIcon = L.divIcon({
         html: `
           <div class="relative transform -translate-x-1/2 -translate-y-1/2">
-            <div class="w-8 h-8 rounded-full border-3 shadow-lg flex items-center justify-center transition-all duration-200 ${
+            <div class="w-10 h-10 rounded-full border-3 shadow-lg flex items-center justify-center transition-all duration-200 ${
               isSelected 
                 ? 'bg-orange-500 border-white scale-125' 
                 : 'bg-white border-purple-400 hover:border-purple-600'
-            }">
-              <svg class="h-4 w-4 ${isSelected ? 'text-white' : 'text-purple-600'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            }" style="background-color: ${color}; border-color: white;">
+              <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <div class="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
-              intensity > 0.7 ? 'bg-red-500' :
-              intensity > 0.4 ? 'bg-orange-500' : 'bg-yellow-500'
-            }"></div>
+            ${flowerTags ? `<div class="flower-tags-container">${flowerTags}</div>` : ''}
           </div>
         `,
         className: 'custom-bloom-marker',
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
+        iconSize: [40, 60],
+        iconAnchor: [20, 50],
       });
 
       marker.setIcon(markerIcon);
@@ -197,28 +204,39 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
         className="absolute inset-0 z-10"
       />
 
-      {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-lg z-20">
-        <h3 className="font-semibold text-sm mb-3 text-gray-800">עוצמת פריחה</h3>
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded-full bg-red-500"></div>
-            <span className="text-xs text-gray-600">גבוהה</span>
+      {/* Floating Header Elements */}
+      <div className="absolute top-4 left-4 z-20 flex items-center space-x-3">
+        {/* Logo and Title */}
+        <div className="flex items-center space-x-2 bg-white/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
+          <div className="p-2 bg-gradient-to-r from-green-500 to-purple-500 rounded-full">
+            <Flower2 className="h-5 w-5 text-white" />
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded-full bg-orange-500"></div>
-            <span className="text-xs text-gray-600">בינונית</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded-full bg-yellow-500"></div>
-            <span className="text-xs text-gray-600">נמוכה</span>
+          <div>
+            <h1 className="text-lg font-bold bg-gradient-to-r from-green-700 to-purple-700 bg-clip-text text-transparent">
+              פריחת ישראל
+            </h1>
           </div>
         </div>
       </div>
 
-      {/* Attribution */}
-      <div className="absolute bottom-2 right-2 text-xs text-gray-500 bg-white/75 px-2 py-1 rounded z-20">
-        © OpenStreetMap contributors
+      {/* Floating Action Buttons */}
+      <div className="absolute top-4 right-4 z-20 flex flex-col space-y-3">
+        {/* Facebook Login */}
+        <Button 
+          size="sm"
+          className="rounded-full w-12 h-12 p-0 bg-blue-600 hover:bg-blue-700 shadow-lg"
+        >
+          <Facebook className="h-5 w-5 text-white" />
+        </Button>
+        
+        {/* Profile Button */}
+        <Button 
+          size="sm" 
+          variant="secondary"
+          className="rounded-full w-12 h-12 p-0 shadow-lg"
+        >
+          <User className="h-5 w-5" />
+        </Button>
       </div>
     </div>
   );

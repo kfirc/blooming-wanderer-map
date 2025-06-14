@@ -5,6 +5,8 @@ import { bloomReportsService } from '../services/bloomReportsService';
 import { Flower2, Loader2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import SignalStrength from './SignalStrength';
+import GlowingIcon from './GlowingIcon';
 
 interface FlowersListProps {
   locationId: string;
@@ -89,6 +91,34 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
     return flower.bloom_season;
   };
 
+  const isFlowerInSeason = (flower: any) => {
+    if (!flower.bloom_start_month || !flower.bloom_end_month) return false;
+    
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
+    const currentDay = now.getDate();
+    
+    // Simple check for bloom season
+    if (flower.bloom_start_month <= flower.bloom_end_month) {
+      // Same year blooming
+      if (currentMonth >= flower.bloom_start_month && currentMonth <= flower.bloom_end_month) {
+        // If we have specific days, check them too
+        if (flower.bloom_start_day && flower.bloom_end_day) {
+          if (currentMonth === flower.bloom_start_month && currentDay < flower.bloom_start_day) return false;
+          if (currentMonth === flower.bloom_end_month && currentDay > flower.bloom_end_day) return false;
+        }
+        return true;
+      }
+    } else {
+      // Cross-year blooming (e.g., November to March)
+      if (currentMonth >= flower.bloom_start_month || currentMonth <= flower.bloom_end_month) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-6">
@@ -115,18 +145,6 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
     );
   }
 
-  const getIntensityColor = (intensity: number) => {
-    if (intensity > 0.7) return 'bg-red-500';
-    if (intensity > 0.4) return 'bg-orange-500';
-    return 'bg-yellow-500';
-  };
-
-  const getIntensityText = (intensity: number) => {
-    if (intensity > 0.7) return 'עזה';
-    if (intensity > 0.4) return 'בינונית';
-    return 'חלשה';
-  };
-
   return (
     <div className="p-4">
       <div className="mb-4">
@@ -138,6 +156,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
         {flowers.map((flowerData) => {
           const reactions = reactionsData[flowerData.flower.id] || { likes: 0, dislikes: 0 };
           const isReacting = reactingFlowers.has(flowerData.flower.id);
+          const inSeason = isFlowerInSeason(flowerData.flower);
           
           return (
             <div 
@@ -146,17 +165,23 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-3">
-                  {flowerData.flower.icon_url ? (
-                    <img 
-                      src={flowerData.flower.icon_url} 
-                      alt={flowerData.flower.name}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-purple-200"
+                  <div className="relative">
+                    {flowerData.flower.icon_url ? (
+                      <img 
+                        src={flowerData.flower.icon_url} 
+                        alt={flowerData.flower.name}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-purple-200"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-purple-400 flex items-center justify-center">
+                        <Flower2 className="h-5 w-5 text-white" />
+                      </div>
+                    )}
+                    <GlowingIcon 
+                      isInSeason={inSeason} 
+                      className="absolute -top-1 -right-1"
                     />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-purple-400 flex items-center justify-center">
-                      <Flower2 className="h-5 w-5 text-white" />
-                    </div>
-                  )}
+                  </div>
                   
                   <div>
                     <h4 className="font-medium text-gray-800">{flowerData.flower.name}</h4>
@@ -169,18 +194,11 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
                   </div>
                 </div>
 
-                <div className="text-left">
-                  <div className="flex items-center space-x-2">
-                    <div 
-                      className={`w-3 h-3 rounded-full ${getIntensityColor(flowerData.intensity)}`}
-                    ></div>
-                    <span className="text-sm font-medium text-gray-700">
-                      {getIntensityText(flowerData.intensity)}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {Math.round(flowerData.intensity * 100)}%
-                  </div>
+                <div className="text-left flex items-center space-x-3">
+                  <SignalStrength intensity={flowerData.intensity} />
+                  {inSeason && (
+                    <span className="text-xs text-green-600 font-medium">פורח כעת</span>
+                  )}
                 </div>
               </div>
 

@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Map from '../components/Map';
 import Sidebar from '../components/Sidebar';
-import Header from '../components/Header';
 import { BloomReport } from '../types/BloomReport';
 import { bloomReportsService } from '../services/bloomReportsService';
 import { Loader2 } from 'lucide-react';
@@ -26,18 +25,16 @@ const Index = () => {
 
   const handleCloseSidebar = () => {
     setSidebarOpen(false);
-    setSelectedLocation(null);
+    // Don't clear selectedLocation immediately to allow for smooth closing animation
+    setTimeout(() => setSelectedLocation(null), 300);
   };
 
   if (isLoading) {
     return (
-      <div className="h-screen flex flex-col bg-gradient-to-br from-green-50 to-purple-50">
-        <Header />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex items-center space-x-2 text-gray-600">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>טוען דיווחי פריחה...</span>
-          </div>
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-purple-50">
+        <div className="flex items-center space-x-2 text-gray-600">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>טוען דיווחי פריחה...</span>
         </div>
       </div>
     );
@@ -45,22 +42,18 @@ const Index = () => {
 
   if (error) {
     return (
-      <div className="h-screen flex flex-col bg-gradient-to-br from-green-50 to-purple-50">
-        <Header />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center text-gray-600">
-            <p className="mb-2">שגיאה בטעינת הדיווחים</p>
-            <p className="text-sm">אנא נסה לרענן את הדף</p>
-          </div>
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-purple-50">
+        <div className="text-center text-gray-600">
+          <p className="mb-2">שגיאה בטעינת הדיווחים</p>
+          <p className="text-sm">אנא נסה לרענן את הדף</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-green-50 to-purple-50">
-      <Header />
-      <div className="flex-1 flex relative">
+    <div className="h-screen flex bg-gradient-to-br from-green-50 to-purple-50">
+      <div className="flex-1 relative">
         <Map 
           reports={reports} 
           onLocationClick={handleLocationClick}

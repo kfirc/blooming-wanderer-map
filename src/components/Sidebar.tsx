@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Calendar, Heart, Camera, Navigation, ExternalLink, Flower2, ArrowDown } from 'lucide-react';
+import { Calendar, Heart, Camera, Navigation, ExternalLink, Flower2, ArrowDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BloomReport } from '../types/BloomReport';
 import ImageGallery from './ImageGallery';
@@ -39,12 +39,29 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, reports, selectedLoc
         />
       )}
 
+      {/* Collapsible Toggle Button */}
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={onClose}
+        className={`
+          fixed top-1/2 -translate-y-1/2 z-50 transition-all duration-300 ease-in-out
+          rounded-l-lg rounded-r-none shadow-lg w-8 h-16 p-0
+          ${isOpen ? 'right-96 md:right-96' : 'right-0'}
+        `}
+      >
+        {isOpen ? (
+          <ChevronRight className="h-4 w-4" />
+        ) : (
+          <ChevronLeft className="h-4 w-4" />
+        )}
+      </Button>
+
       {/* Sidebar */}
       <div className={`
-        fixed md:relative right-0 top-0 h-full w-full md:w-96 bg-white shadow-xl z-50
+        fixed right-0 top-0 h-full w-full md:w-96 bg-white shadow-xl z-40
         transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
-        ${!isOpen && !selectedLocation ? 'md:w-0 md:overflow-hidden' : ''}
+        ${isOpen ? 'translate-x-0' : 'translate-x-full'}
       `}>
         <div className="h-full flex flex-col">
           {/* Header */}
@@ -52,14 +69,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, reports, selectedLoc
             <h2 className="text-lg font-semibold text-gray-800">
               {selectedLocation ? 'פרטי מיקום' : 'דיווחי פריחה'}
             </h2>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100"
-            >
-              <X className="h-5 w-5" />
-            </Button>
           </div>
 
           {/* Content */}
@@ -189,20 +198,20 @@ const LocationCard: React.FC<LocationCardProps> = ({ report, isDetailed }) => {
             <Button 
               size="sm" 
               variant="outline"
-              className="text-xs"
+              className="text-xs flex items-center space-x-1 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
               onClick={() => window.open(generateWazeUrl(report.location.latitude, report.location.longitude), '_blank')}
             >
-              <Navigation className="h-3 w-3 mr-1" />
-              Waze
+              <Navigation className="h-3 w-3" />
+              <span>Waze</span>
             </Button>
             <Button 
               size="sm" 
               variant="outline"
-              className="text-xs"
+              className="text-xs flex items-center space-x-1 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
               onClick={() => window.open(report.facebook_post_url, '_blank')}
             >
-              <ExternalLink className="h-3 w-3 mr-1" />
-              פייסבוק
+              <ExternalLink className="h-3 w-3" />
+              <span>פייסבוק</span>
             </Button>
           </div>
         </div>
