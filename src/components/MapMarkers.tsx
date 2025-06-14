@@ -1,0 +1,106 @@
+
+import React, { useEffect, useRef } from 'react';
+import L from 'leaflet';
+import { BloomReport } from '../types/BloomReport';
+
+interface MapMarkersProps {
+  map: L.Map | null;
+  reports: BloomReport[];
+  selectedLocation: BloomReport | null;
+  onLocationClick: (report: BloomReport) => void;
+  mapLoaded: boolean;
+}
+
+const MapMarkers: React.FC<MapMarkersProps> = ({
+  map,
+  reports,
+  selectedLocation,
+  onLocationClick,
+  mapLoaded
+}) => {
+  const markersRef = useRef<{ [key: string]: L.Marker }>({});
+
+  useEffect(() => {
+    if (!map || !mapLoaded) return;
+
+    console.log('Updating markers with reports:', reports.length);
+
+    // Clear existing markers
+    Object.values(markersRef.current).forEach(marker => marker.remove());
+    markersRef.current = {};
+
+    reports.forEach((report) => {
+      const { latitude, longitude } = report.location;
+      const intensity = report.location.intensity;
+      const color = intensity > 0.7 ? '#ef4444' : intensity > 0.4 ? '#f97316' : '#eab308';
+
+      // Create flower tags for this location
+      const flowerTags = report.flower_types.slice(0, 3).map(flower => 
+        `<span class="flower-tag">${flower}</span>`
+      ).join('');
+
+      // Create custom marker icon with flower tags
+      const isSelected = selectedLocation?.id === report.id;
+      const markerIcon = L.divIcon({
+        html: `
+          <div class="relative transform -translate-x-1/2 -translate-y-1/2">
+            <div class="w-10 h-10 rounded-full border-3 shadow-lg flex items-center justify-center transition-all duration-200 ${
+              isSelected 
+                ? 'bg-orange-500 border-white scale-125' 
+                : 'bg-white border-purple-400 hover:border-purple-600'
+            }" style="background-color: ${color}; border-color: white;">
+              <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            ${flowerTags ? `<div class="flower-tags-container">${flowerTags}</div>` : ''}
+          </div>
+        `,
+        className: 'custom-bloom-marker',
+        iconSize: [40, 60],
+        iconAnchor: [20, 50],
+      });
+
+      // Create marker
+      const marker = L.marker([latitude, longitude], { icon: markerIcon })
+        .addTo(map);
+
+      // Add popup with report details
+      const popupContent = `
+        <div class="p-2 max-w-48">
+          <div class="flex items-center space-x-2 mb-2">
+            <img 
+              src="${report.user.profile_photo_url || 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=24&h=24&fit=crop&crop=face'}" 
+              alt="${report.user.display_name}"
+              class="w-6 h-6 rounded-full"
+            />
+            <span class="font-medium text-sm">${report.user.display_name}</span>
+          </div>
+          <p class="text-xs text-gray-600 mb-2 line-clamp-2">${report.description || ''}</p>
+          <div class="flex items-center justify-between text-xs text-gray-500">
+            <div class="flex items-center space-x-1">
+              <span>📸 ${report.images.length}</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <span>⚡ ${report.likes_count}</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+
+      // Add click handler
+      marker.on('click', () => {
+        onLocationClick(report);
+      });
+
+      markersRef.current[report.id] = marker;
+    });
+  }, [map, reports, selectedLocation, onLocationClick, mapLoaded]);
+
+  return null; // This component doesn't render anything directly
+};
+
+export default MapMarkers;
