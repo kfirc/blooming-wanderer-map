@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bloomReportsService } from '../services/bloomReportsService';
 import { Flower2, Loader2, ThumbsUp, ThumbsDown } from 'lucide-react';
@@ -15,13 +15,16 @@ interface FlowersListProps {
   flowersPerLocation: FlowerPerLocation[];
   isLoading: boolean;
   error: unknown;
+  selectedFlowers: string[];
+  onFilterChange: (selected: string[]) => void;
 }
 
-const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName, flowersPerLocation, isLoading, error }) => {
+const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName, flowersPerLocation, isLoading, error, selectedFlowers, onFilterChange }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [reactingFlowers, setReactingFlowers] = useState<Set<string>>(new Set());
   const [selectedFlowerId, setSelectedFlowerId] = useState<string | null>(null);
+  const [hoveredFlowerId, setHoveredFlowerId] = useState<string | null>(null);
 
   // Fetch reactions for all flowers
   const { data: reactionsData = {} } = useQuery({
@@ -215,6 +218,32 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName, flo
     return false;
   };
 
+  // Handle selection logic
+  const handleFlowerClick = (flowerId: string) => {
+    let newSelected: string[];
+    if (selectedFlowers.includes(flowerId)) {
+      // Deselect
+      newSelected = selectedFlowers.filter(id => id !== flowerId);
+      // If all are deselected, revert to all selected
+      if (newSelected.length === 0) {
+        newSelected = flowersPerLocation.map(f => f.flower.id);
+      }
+    } else {
+      // Select
+      newSelected = [...selectedFlowers, flowerId];
+    }
+    onFilterChange(newSelected);
+  };
+
+  // Clear selection (select all)
+  const handleClearSelection = () => {
+    onFilterChange(flowersPerLocation.map(f => f.flower.id));
+  };
+
+  // Find the flower to show in the top chart
+  const chartFlowerData = flowersPerLocation.find(f => f.flower.id === hoveredFlowerId) || flowersPerLocation[0];
+  const chartMonthlyData = chartFlowerData ? generateMonthlyData(chartFlowerData.flower, chartFlowerData.intensity) : new Array(12).fill(0);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-6">
@@ -241,34 +270,29 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName, flo
     );
   }
 
-  // Find selected flower (default to first)
-  const selectedFlowerData = flowersPerLocation.find(f => f.flower.id === selectedFlowerId) || flowersPerLocation[0];
-  const selectedMonthlyData = selectedFlowerData ? generateMonthlyData(selectedFlowerData.flower, selectedFlowerData.intensity) : new Array(12).fill(0);
-
   return (
     <div className="p-4">
-      {/* Single MonthlyIntensityChart at the top */}
+      {/* Always show the intensity chart at the top */}
       <div className="mb-6 flex justify-center">
         <MonthlyIntensityChart
-          monthlyData={selectedMonthlyData}
-          bloomStartMonth={selectedFlowerData?.flower.bloom_start_month}
-          bloomEndMonth={selectedFlowerData?.flower.bloom_end_month}
+          monthlyData={chartMonthlyData}
+          bloomStartMonth={chartFlowerData?.flower.bloom_start_month}
+          bloomEndMonth={chartFlowerData?.flower.bloom_end_month}
         />
       </div>
       <div className="space-y-4">
         {flowersPerLocation.map((flowerData) => {
           const reactions = reactionsData[flowerData.flower.id] || { likes: 0, dislikes: 0 };
-          const isReacting = reactingFlowers.has(flowerData.flower.id);
+          const isSelected = selectedFlowers.includes(flowerData.flower.id);
           const inSeason = isFlowerInSeason(flowerData.flower);
-          // const monthlyData = generateMonthlyData(flowerData.flower, flowerData.intensity); // No longer needed here
 
           return (
             <div
               key={flowerData.id}
-              className={`p-3 bg-gray-50 rounded-lg border border-gray-200 text-right flex items-center gap-x-3 transition-colors duration-150 ${selectedFlowerId === flowerData.flower.id ? 'ring-2 ring-purple-400' : ''}`}
-              onMouseEnter={() => setSelectedFlowerId(flowerData.flower.id)}
-              onClick={() => setSelectedFlowerId(flowerData.flower.id)}
-              style={{ cursor: 'pointer' }}
+              className={`p-3 bg-gray-50 rounded-lg border border-gray-200 text-right flex items-center gap-x-3 transition-colors duration-150 cursor-pointer ${isSelected ? 'ring-2 ring-purple-400 bg-purple-50' : ''}`}
+              onMouseEnter={() => setHoveredFlowerId(flowerData.flower.id)}
+              onMouseLeave={() => setHoveredFlowerId(null)}
+              onClick={() => handleFlowerClick(flowerData.flower.id)}
             >
               {/* Flower icon */}
               <div className="relative">
@@ -301,7 +325,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName, flo
                   variant={reactions.userReaction === 'like' ? 'default' : 'outline'}
                   size="sm"
                   onClick={e => { e.stopPropagation(); handleReaction(flowerData.flower.id, 'like'); }}
-                  disabled={isReacting}
+                  disabled={reactingFlowers.has(flowerData.flower.id)}
                   className="w-16 flex items-center text-xs h-9 px-3 border-0 box-border outline-none focus:outline-none active:outline-none focus:ring-0 focus:ring-offset-0 active:ring-0 active:ring-offset-0"
                 >
                   <ThumbsUp className="h-3 w-3" />
@@ -311,7 +335,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName, flo
                   variant={reactions.userReaction === 'dislike' ? 'destructive' : 'outline'}
                   size="sm"
                   onClick={e => { e.stopPropagation(); handleReaction(flowerData.flower.id, 'dislike'); }}
-                  disabled={isReacting}
+                  disabled={reactingFlowers.has(flowerData.flower.id)}
                   className="w-16 flex items-center text-xs h-9 px-3 border-0 box-border outline-none focus:outline-none active:outline-none focus:ring-0 focus:ring-offset-0 active:ring-0 active:ring-offset-0"
                 >
                   <ThumbsDown className="h-3 w-3" />

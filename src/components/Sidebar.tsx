@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, Heart, Camera, Navigation, ExternalLink, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import { Calendar, Heart, Camera, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BloomReport, FlowerPerLocation } from '../types/BloomReport';
+import { BloomReport, FlowerPerLocation, Flower } from '../types/BloomReport';
 import ImageGallery from './ImageGallery';
 import FlowersList from './FlowersList';
-import { useQuery } from '@tanstack/react-query';
 import { bloomReportsService } from '../services/bloomReportsService';
+import LocationOrderSelect from './LocationOrderSelect';
+import LocationFlowerFilter from './LocationFlowerFilter';
+import ReportsSection from './ReportsSection';
+import { Badge } from './ui/badge';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -59,42 +62,169 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, reports, selectedLo
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Placeholder for reports loading state
-  const reportsLoading = false;
+  // New state for order and filter
+  const [orderBy, setOrderBy] = useState<'date' | 'likes'>('date');
+  const [filterFlower, setFilterFlower] = useState<string>('__all__');
 
-  // Load more reports with pagination
-  const loadMoreReports = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
-    
+  // Map UI orderBy to DB field
+  const orderByField = orderBy === 'date' ? 'post_date' : 'likes_count';
+
+  // Compute available flowers for filter dropdown
+  const flowerOptions = React.useMemo(() => {
+    const source = selectedLocation ? reports : allReports;
+    return Array.from(new Set(source.flatMap(r => r.flower_types)));
+  }, [selectedLocation, reports, allReports]);
+
+  // New state for location reports
+  const [locationReports, setLocationReports] = useState<BloomReport[]>([]);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationHasMore, setLocationHasMore] = useState(true);
+  const [locationOffset, setLocationOffset] = useState(0);
+
+  // Add state for selectedFlowers
+  const [selectedFlowers, setSelectedFlowers] = useState<string[]>([]);
+
+  // When flowersPerLocation changes, reset selectedFlowers to all
+  useEffect(() => {
+    if (flowersPerLocation && flowersPerLocation.length > 0) {
+      setSelectedFlowers(flowersPerLocation.map(f => f.flower.id));
+    }
+  }, [flowersPerLocation]);
+
+  // Ensure reports are fetched when selectedFlowers changes
+  useEffect(() => {
+    if (!selectedLocation) {
+      setAllReports([]);
+      setOffset(0);
+      setHasMore(true);
+      fetchReports(0, true);
+    }
+    // eslint-disable-next-line
+  }, [orderBy, filterFlower, selectedFlowers]);
+
+  useEffect(() => {
+    if (selectedLocation) {
+      setLocationReports([]);
+      setLocationOffset(0);
+      setLocationHasMore(true);
+      fetchLocationReports(0, true);
+    }
+    // eslint-disable-next-line
+  }, [selectedLocation, orderBy, filterFlower, selectedFlowers]);
+
+  // Fetch reports with pagination
+  const allFlowerIds = flowersPerLocation.map(f => f.flower.id);
+  const selectedFlowerFilter = selectedFlowers.length === allFlowerIds.length ? undefined : selectedFlowers;
+
+  const fetchReports = async (startOffset = 0, reset = false) => {
     setLoadingMore(true);
     try {
-      const newReports = await bloomReportsService.getReportsWithPagination(offset, 5);
+      const newReports = await bloomReportsService.getReportsWithPagination(
+        startOffset,
+        5,
+        orderByField,
+        filterFlower === '__all__' ? '' : filterFlower,
+        selectedFlowerFilter
+      );
       if (newReports.length < 5) {
         setHasMore(false);
       }
-      setAllReports(prev => [...prev, ...newReports]);
-      setOffset(prev => prev + 5);
+      setAllReports(prev => reset ? newReports : [...prev, ...newReports]);
+      setOffset(prev => reset ? 5 : prev + 5);
     } catch (error) {
-      console.error('Error loading more reports:', error);
+      console.error('Error loading reports:', error);
     } finally {
       setLoadingMore(false);
     }
-  }, [offset, loadingMore, hasMore]);
+  };
+
+  // Load more reports with pagination
+  const loadMoreReports = useCallback(async () => {
+    if (loadingMore || !hasMore || selectedLocation) return;
+    await fetchReports(offset);
+  }, [offset, loadingMore, hasMore, selectedLocation]);
 
   // Initialize with first batch
   useEffect(() => {
     if (isOpen && !selectedLocation && allReports.length === 0) {
-      loadMoreReports();
+      fetchReports(0, true);
     }
-  }, [isOpen, selectedLocation, allReports.length, loadMoreReports]);
+    // eslint-disable-next-line
+  }, [isOpen, selectedLocation]);
+
+  // Fetch reports for selected location from DB when filter/order/selectedLocation changes
+  const fetchLocationReports = async (startOffset = 0, reset = false) => {
+    if (!selectedLocation) return;
+    setLocationLoading(true);
+    try {
+      const newReports = await bloomReportsService.getReportsForLocationWithPagination(
+        selectedLocation.location.id,
+        startOffset,
+        5,
+        orderByField,
+        filterFlower === '__all__' ? '' : filterFlower,
+        selectedFlowerFilter
+      );
+      if (newReports.length < 5) {
+        setLocationHasMore(false);
+      }
+      setLocationReports(prev => reset ? newReports : [...prev, ...newReports]);
+      setLocationOffset(prev => reset ? 5 : prev + 5);
+    } catch (error) {
+      console.error('Error loading location reports:', error);
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  const loadMoreLocationReports = useCallback(async () => {
+    if (locationLoading || !locationHasMore || !selectedLocation) return;
+    await fetchLocationReports(locationOffset);
+  }, [locationOffset, locationLoading, locationHasMore, selectedLocation]);
 
   // Handle scroll to load more
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop <= clientHeight * 1.5 && hasMore && !loadingMore) {
-      loadMoreReports();
+    if (selectedLocation) {
+      if (scrollHeight - scrollTop <= clientHeight * 1.5 && locationHasMore && !locationLoading) {
+        loadMoreLocationReports();
+      }
+    } else {
+      if (scrollHeight - scrollTop <= clientHeight * 1.5 && hasMore && !loadingMore) {
+        loadMoreReports();
+      }
     }
-  }, [hasMore, loadingMore, loadMoreReports]);
+  }, [hasMore, loadingMore, loadMoreReports, selectedLocation, locationHasMore, locationLoading, loadMoreLocationReports]);
+
+  // For selectedLocation, use locationReports from DB; otherwise use allReports
+  const displayedReports = selectedLocation
+    ? locationReports
+    : allReports;
+
+  // Determine if any filters are active (not default)
+  const filtersActive = (
+    selectedFlowers.length !== allFlowerIds.length ||
+    orderBy !== 'date' ||
+    filterFlower !== '__all__'
+  );
+
+  const handleClearSelection = () => {
+    setSelectedFlowers(allFlowerIds);
+    setOrderBy('date');
+    setFilterFlower('__all__');
+  };
+
+  const [allFlowers, setAllFlowers] = useState<Flower[]>([]);
+  useEffect(() => {
+    bloomReportsService.getFlowers().then(setAllFlowers);
+  }, []);
+  // Build flowerIdToName mapping from allFlowers array
+  const flowerIdToName: Record<string, string> = allFlowers.reduce((acc, flower) => {
+    acc[flower.id] = flower.name;
+    return acc;
+  }, {} as Record<string, string>);
+
+  const computedSidebarMode = sidebarMode === 'info' ? 'info' : (selectedLocation ? 'location' : 'all');
 
   return (
     <>
@@ -141,61 +271,42 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, reports, selectedLo
                 <h2 className="text-xl font-bold mb-4">מידע על הדף</h2>
                 <p>כאן יוצג מידע על הדף, מטרותיו, והסבר קצר על השימוש במפה ובדיווחי הפריחה.</p>
               </div>
-            ) : selectedLocation ? (
-              /* Single Location View */
-              <div>
-                {/* Flowers Section */}
-                <FlowersList 
-                  locationId={selectedLocation.location.id} 
-                  locationName={selectedLocation.location.name}
-                  flowersPerLocation={flowersPerLocation}
-                  isLoading={flowersLoading}
-                  error={flowersError}
-                />
-                
-                {/* Reports Section - Always shown */}
-                <div className="p-4 border-t border-gray-200">
-                  <div className="space-y-4">
-                    {reportsLoading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
-                        <span className="ml-2 text-gray-600">טוען דיווחים...</span>
-                      </div>
-                    ) : reports.filter(report => report.location.id === selectedLocation.location.id).length > 0 ? (
-                      reports
-                        .filter(report => report.location.id === selectedLocation.location.id)
-                        .map((report) => (
-                          <LocationCard key={report.id} report={report} isDetailed={true} />
-                        ))
-                    ) : (
-                      <div className="text-center text-gray-600 py-8">
-                        <Camera className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                        <p>אין דיווחים עבור מיקום זה</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
             ) : (
-              /* All Reports List */
-              <div className="p-4 space-y-4">
-                <div className="text-sm text-gray-600 mb-4">
-                  מציג דיווחי פריחה אחרונים
-                </div>
-                {allReports.map((report) => (
-                  <LocationCard key={report.id} report={report} isDetailed={false} />
-                ))}
-                {loadingMore && (
-                  <div className="text-center py-4 text-gray-500">
-                    טוען עוד דיווחים...
-                  </div>
-                )}
-                {!hasMore && allReports.length > 0 && (
-                  <div className="text-center py-4 text-gray-500 text-sm">
-                    הוצגו כל הדיווחים
-                  </div>
-                )}
-              </div>
+              <ReportsSection
+                flowersPerLocation={computedSidebarMode === 'location' ? flowersPerLocation : []}
+                isLoadingFlowers={flowersLoading}
+                flowersError={flowersError}
+                fetchReports={async ({ offset, reset, orderBy, filterFlower, selectedFlowers, fromDate }) => {
+                  if (selectedLocation) {
+                    return bloomReportsService.getReportsForLocationWithPagination(
+                      selectedLocation.location.id,
+                      offset,
+                      5,
+                      orderBy,
+                      filterFlower,
+                      selectedFlowers,
+                      fromDate
+                    );
+                  } else {
+                    return bloomReportsService.getReportsWithPagination(
+                      offset,
+                      5,
+                      orderBy,
+                      filterFlower,
+                      selectedFlowers,
+                      fromDate
+                    );
+                  }
+                }}
+                initialReports={selectedLocation ? locationReports : allReports}
+                hasMore={selectedLocation ? locationHasMore : hasMore}
+                loadingMore={selectedLocation ? locationLoading : loadingMore}
+                sidebarMode={computedSidebarMode}
+                locationName={selectedLocation ? selectedLocation.location.name : undefined}
+                locationId={selectedLocation ? selectedLocation.location.id : undefined}
+                flowerIdToName={flowerIdToName}
+                allFlowers={allFlowers}
+              />
             )}
           </div>
         </div>
@@ -215,7 +326,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ report, isDetailed }) => {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow text-right">
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow text-right" dir="rtl">
       {/* Header */}
       <div className="p-4 pb-3">
         <div className="flex items-center space-x-3 mb-3">
@@ -224,11 +335,11 @@ const LocationCard: React.FC<LocationCardProps> = ({ report, isDetailed }) => {
             alt={report.user.display_name}
             className="w-10 h-10 rounded-full border-2 border-purple-200"
           />
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-800">{report.user.display_name}</h3>
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
+          <div className="flex-1 pr-2">
+            <h3 className="font-semibold text-gray-800 mb-1 pr-1">{report.user.display_name}</h3>
+            <div className="flex items-center space-x-2 text-sm text-gray-500 pr-1">
               <Calendar className="h-4 w-4" />
-              <span>{formatDate(report.post_date)}</span>
+              <span className="pr-1">{formatDate(report.post_date)}</span>
               <Heart className="h-4 w-4 text-red-500" />
               <span>{report.likes_count}</span>
             </div>
@@ -239,18 +350,26 @@ const LocationCard: React.FC<LocationCardProps> = ({ report, isDetailed }) => {
         <p className="text-gray-700 text-sm mb-3">{report.description}</p>
 
         {/* Flower Types */}
-        {report.flower_types.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-3">
-            {report.flower_types.map((flower, index) => (
-              <span 
-                key={index}
-                className="px-2 py-1 bg-gradient-to-r from-green-100 to-purple-100 text-green-800 text-xs rounded-full"
-              >
-                {flower}
-              </span>
+        {report.flower_ids && report.flower_ids.length > 0 ? (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {report.flower_ids.map((flowerId, index) => (
+              flowerIdToName[flowerId] ? (
+                <Badge key={flowerId} className="bg-gradient-to-r from-green-100 to-purple-100 text-green-800">
+                  {flowerIdToName[flowerId]}
+                </Badge>
+              ) : null
             ))}
           </div>
-        )}
+        ) : report.flower_types && report.flower_types.length > 0 ? (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {/* TODO: Remove flower_types after migration */}
+            {report.flower_types.map((flower, index) => (
+              <Badge key={flower} className="bg-gradient-to-r from-green-100 to-purple-100 text-green-800">
+                {flower}
+              </Badge>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {/* Image Gallery */}

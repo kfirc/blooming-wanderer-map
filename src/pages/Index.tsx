@@ -97,7 +97,7 @@ const Index = () => {
         <Sidebar 
           isOpen={sidebarOpen}
           onToggle={handleToggleSidebar}
-          reports={selectedLocation ? [selectedLocation] : reports}
+          reports={selectedLocation ? reports.filter(r => r.location.id === selectedLocation.location.id) : reports}
           selectedLocation={selectedLocation}
           sidebarMode={sidebarMode}
           flowersPerLocation={flowersPerLocation}

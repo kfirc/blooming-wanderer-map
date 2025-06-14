@@ -45,16 +45,33 @@ export const bloomReportsService = {
   },
 
   // Fetch reports with pagination
-  async getReportsWithPagination(offset: number, limit: number): Promise<BloomReport[]> {
-    const { data, error } = await supabase
+  async getReportsWithPagination(
+    offset: number,
+    limit: number,
+    orderBy: 'post_date' | 'likes_count' = 'post_date',
+    filterFlower: string = '',
+    selectedFlowers?: string[]
+  ): Promise<BloomReport[]> {
+    let query = supabase
       .from('bloom_reports')
       .select(`
         *,
         location:locations(*),
         user:users(*)
       `)
-      .order('post_date', { ascending: false })
+      .order(orderBy, { ascending: false })
       .range(offset, offset + limit - 1);
+
+    if (filterFlower) {
+      // TODO: Remove flower_types after migration
+      query = query.contains('flower_ids', [filterFlower]);
+    }
+    if (selectedFlowers && selectedFlowers.length > 0) {
+      // TODO: Remove flower_types after migration
+      query = query.contains('flower_ids', selectedFlowers);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching paginated bloom reports:', error);
@@ -240,5 +257,47 @@ export const bloomReportsService = {
       console.error('Error removing flower reaction:', error);
       throw error;
     }
-  }
+  },
+
+  async getReportsForLocationWithPagination(
+    locationId: string,
+    offset: number,
+    limit: number,
+    orderBy: 'post_date' | 'likes_count' = 'post_date',
+    filterFlower: string = '',
+    selectedFlowers?: string[],
+    fromDate?: string
+  ): Promise<BloomReport[]> {
+    let query = supabase
+      .from('bloom_reports')
+      .select(`
+        *,
+        location:locations(*),
+        user:users(*)
+      `)
+      .eq('location_id', locationId)
+      .order(orderBy, { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (filterFlower) {
+      // TODO: Remove flower_types after migration
+      query = query.contains('flower_ids', [filterFlower]);
+    }
+    if (selectedFlowers && selectedFlowers.length > 0) {
+      // TODO: Remove flower_types after migration
+      query = query.contains('flower_ids', selectedFlowers);
+    }
+    if (fromDate) {
+      query = query.gte('post_date', fromDate);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching paginated bloom reports for location:', error);
+      throw error;
+    }
+
+    return data || [];
+  },
 };

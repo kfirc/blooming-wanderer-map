@@ -8,6 +8,7 @@ export interface BloomReport {
   description?: string;
   images: string[];
   flower_types: string[];
+  flower_ids?: string[];
   likes_count: number;
   post_date: string;
   created_at: string;
