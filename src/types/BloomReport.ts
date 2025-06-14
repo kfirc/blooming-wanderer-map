@@ -1,4 +1,3 @@
-
 export interface BloomReport {
   id: string;
   location_id: string;
@@ -22,6 +21,7 @@ export interface BloomReport {
     latitude: number;
     longitude: number;
     intensity: number;
+    waze_url?: string;
   };
   user: {
     id: string;

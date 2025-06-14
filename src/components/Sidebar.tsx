@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, Heart, Camera, Navigation, ExternalLink, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,6 +25,28 @@ const formatDate = (dateString: string) => {
   if (diffDays === 2) return 'אתמול';
   if (diffDays <= 7) return `לפני ${diffDays} ימים`;
   return date.toLocaleDateString('he-IL');
+};
+
+const LocationDrawerHeader: React.FC<{ selectedLocation: BloomReport['location'] | null }> = ({ selectedLocation }) => {
+  if (selectedLocation) {
+    return (
+      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-purple-50">
+        <h2 className="text-xl font-bold text-gray-800 truncate">{selectedLocation.name}</h2>
+        <button
+          onClick={() => window.open(selectedLocation.waze_url || `https://waze.com/ul?ll=${selectedLocation.latitude},${selectedLocation.longitude}`, '_blank')}
+          className="focus:outline-none hover:scale-110 transition-transform ml-4"
+          title="נווט עם Waze"
+        >
+          <img src="/waze.svg" alt="Waze" className="h-8 w-8" />
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-purple-50">
+      <h2 className="text-xl font-bold text-gray-800">דיווחי פריחה</h2>
+    </div>
+  );
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, reports, selectedLocation }) => {
@@ -104,11 +125,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, reports, selectedLo
       `}>
         <div className="h-full flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-purple-50">
-            <h2 className="text-lg font-semibold text-gray-800">
-              {selectedLocation ? 'פרטי מיקום' : 'דיווחי פריחה'}
-            </h2>
-          </div>
+          <LocationDrawerHeader selectedLocation={selectedLocation ? selectedLocation.location : null} />
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto" onScroll={handleScroll}>
@@ -123,7 +140,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, reports, selectedLo
                 
                 {/* Reports Section - Always shown */}
                 <div className="p-4 border-t border-gray-200">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">דיווחים</h3>
                   <div className="space-y-4">
                     {reports.filter(report => report.location.id === selectedLocation.location.id).length > 0 ? (
                       reports
@@ -237,7 +253,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ report, isDetailed }) => {
               className="text-xs flex items-center space-x-1 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
               onClick={() => window.open(generateWazeUrl(report.location.latitude, report.location.longitude), '_blank')}
             >
-              <Navigation className="h-3 w-3" />
+              <img src="/waze.svg" alt="Waze" className="h-4 w-4" />
               <span>Waze</span>
             </Button>
             <Button 

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bloomReportsService } from '../services/bloomReportsService';
@@ -180,12 +179,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName }) =
   }
 
   return (
-    <div className="p-4">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-1">{locationName}</h3>
-        <p className="text-sm text-gray-600">פרחים פורחים כעת</p>
-      </div>
-      
+    <div className="p-4">      
       <div className="space-y-4">
         {flowers.map((flowerData) => {
           const reactions = reactionsData[flowerData.flower.id] || { likes: 0, dislikes: 0 };
