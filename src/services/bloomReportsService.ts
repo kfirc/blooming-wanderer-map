@@ -226,5 +226,19 @@ export const bloomReportsService = {
       console.error('Error updating likes count:', error);
       throw error;
     }
+  },
+
+  async removeFlowerReaction(flowerId: string, locationId: string): Promise<void> {
+    const userIp = await this.getUserIp();
+    const { error } = await supabase
+      .from('flower_location_reactions')
+      .delete()
+      .eq('flower_id', flowerId)
+      .eq('location_id', locationId)
+      .eq('user_ip', userIp);
+    if (error) {
+      console.error('Error removing flower reaction:', error);
+      throw error;
+    }
   }
 };

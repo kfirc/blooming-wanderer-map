@@ -40,36 +40,100 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName, flo
     mutationFn: async ({ flowerId, reactionType }: { flowerId: string, reactionType: 'like' | 'dislike' }) => {
       await bloomReportsService.addFlowerReaction(flowerId, locationId, reactionType);
     },
-    onMutate: ({ flowerId }) => {
-      setReactingFlowers(prev => new Set(prev).add(flowerId));
+    onMutate: ({ flowerId, reactionType }) => {
+      // Optimistically update the cache
+      queryClient.setQueryData(
+        ['flower-reactions', locationId],
+        (oldData: Record<string, {likes: number, dislikes: number, userReaction?: 'like' | 'dislike'}> | undefined) => {
+          if (!oldData) return oldData;
+          const updated = { ...oldData };
+          const prev = updated[flowerId];
+          if (prev) {
+            let likes = prev.likes;
+            let dislikes = prev.dislikes;
+            // Remove previous reaction
+            if (prev.userReaction === 'like') likes = Math.max(0, likes - 1);
+            if (prev.userReaction === 'dislike') dislikes = Math.max(0, dislikes - 1);
+            // Add new reaction
+            if (reactionType === 'like') likes += 1;
+            if (reactionType === 'dislike') dislikes += 1;
+            updated[flowerId] = {
+              ...prev,
+              likes,
+              dislikes,
+              userReaction: reactionType,
+            };
+          }
+          return updated;
+        }
+      );
     },
-    onSuccess: () => {
+    onError: (error, { flowerId, reactionType }, context) => {
+      // Revert optimistic update
       queryClient.invalidateQueries({ queryKey: ['flower-reactions', locationId] });
-      queryClient.invalidateQueries({ queryKey: ['flowers-per-location', locationId] });
-      toast({
-        title: "תגובה נשמרה",
-        description: "תגובתך נשמרה בהצלחה!",
-      });
-    },
-    onError: (error) => {
-      console.error('Error submitting reaction:', error);
       toast({
         title: "שגיאה",
         description: "אירעה שגיאה בשמירת התגובה",
         variant: "destructive",
       });
     },
-    onSettled: (data, error, variables) => {
-      setReactingFlowers(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(variables.flowerId);
-        return newSet;
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['flowers-per-location', locationId] });
+    },
+  });
+
+  const removeReactionMutation = useMutation({
+    mutationFn: async (flowerId: string) => {
+      await bloomReportsService.removeFlowerReaction(flowerId, locationId);
+    },
+    onMutate: (flowerId) => {
+      // Optimistically update the cache
+      queryClient.setQueryData(
+        ['flower-reactions', locationId],
+        (oldData: Record<string, {likes: number, dislikes: number, userReaction?: 'like' | 'dislike'}> | undefined) => {
+          if (!oldData) return oldData;
+          const updated = { ...oldData };
+          const prev = updated[flowerId];
+          if (prev) {
+            if (prev.userReaction === 'like') {
+              updated[flowerId] = {
+                ...prev,
+                likes: Math.max(0, prev.likes - 1),
+                userReaction: undefined,
+              };
+            } else if (prev.userReaction === 'dislike') {
+              updated[flowerId] = {
+                ...prev,
+                dislikes: Math.max(0, prev.dislikes - 1),
+                userReaction: undefined,
+              };
+            }
+          }
+          return updated;
+        }
+      );
+    },
+    onError: (error, flowerId, context) => {
+      // Revert optimistic update
+      queryClient.invalidateQueries({ queryKey: ['flower-reactions', locationId] });
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בהסרת התגובה",
+        variant: "destructive",
       });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['flowers-per-location', locationId] });
     },
   });
 
   const handleReaction = (flowerId: string, reactionType: 'like' | 'dislike') => {
-    reactionMutation.mutate({ flowerId, reactionType });
+    const currentReaction = reactionsData[flowerId]?.userReaction;
+    if (currentReaction === reactionType) {
+      removeReactionMutation.mutate(flowerId);
+    } else {
+      reactionMutation.mutate({ flowerId, reactionType });
+    }
   };
 
   // Generate sample monthly data based on bloom season
@@ -238,7 +302,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName, flo
                   size="sm"
                   onClick={e => { e.stopPropagation(); handleReaction(flowerData.flower.id, 'like'); }}
                   disabled={isReacting}
-                  className="flex items-center space-x-1 text-xs"
+                  className="w-16 flex items-center text-xs h-9 px-3 border-0 box-border outline-none focus:outline-none active:outline-none focus:ring-0 focus:ring-offset-0 active:ring-0 active:ring-offset-0"
                 >
                   <ThumbsUp className="h-3 w-3" />
                   <span>{reactions.likes}</span>
@@ -248,14 +312,11 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName, flo
                   size="sm"
                   onClick={e => { e.stopPropagation(); handleReaction(flowerData.flower.id, 'dislike'); }}
                   disabled={isReacting}
-                  className="flex items-center space-x-1 text-xs"
+                  className="w-16 flex items-center text-xs h-9 px-3 border-0 box-border outline-none focus:outline-none active:outline-none focus:ring-0 focus:ring-offset-0 active:ring-0 active:ring-offset-0"
                 >
                   <ThumbsDown className="h-3 w-3" />
                   <span>{reactions.dislikes}</span>
                 </Button>
-                {isReacting && (
-                  <Loader2 className="h-4 w-4 animate-spin text-gray-400 ml-2" />
-                )}
               </div>
             </div>
           );
