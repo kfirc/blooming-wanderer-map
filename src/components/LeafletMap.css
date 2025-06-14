@@ -1,0 +1,29 @@
+
+/* Custom styles for Leaflet markers */
+.custom-bloom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.custom-bloom-marker div {
+  background: transparent;
+}
+
+/* Ensure Leaflet controls have proper z-index */
+.leaflet-control-zoom {
+  z-index: 1000;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+}
+
+.leaflet-popup-content {
+  margin: 8px 12px;
+  line-height: 1.4;
+}
+
+/* Fix for marker shadows */
+.leaflet-marker-shadow {
+  display: none;
+}
