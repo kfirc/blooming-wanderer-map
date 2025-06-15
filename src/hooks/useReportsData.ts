@@ -9,6 +9,7 @@ export interface UseReportsDataProps {
   selectedFlowers?: string[];
   dateRange?: Date | null;
   pageSize?: number;
+  enabled?: boolean;
 }
 
 export interface UseReportsDataReturn {
@@ -27,6 +28,7 @@ export const useReportsData = ({
   selectedFlowers,
   dateRange,
   pageSize = 5,
+  enabled = true,
 }: UseReportsDataProps): UseReportsDataReturn => {
   const [reports, setReports] = useState<BloomReport[]>([]);
   const [offset, setOffset] = useState(0);
@@ -35,6 +37,8 @@ export const useReportsData = ({
   const [error, setError] = useState<unknown>(null);
 
   const fetchReports = async (startOffset = 0, reset = false) => {
+    if (!enabled) return;
+    
     setLoadingMore(true);
     setError(null);
     
@@ -73,21 +77,31 @@ export const useReportsData = ({
   };
 
   const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+    if (loadingMore || !hasMore || !enabled) return;
     await fetchReports(offset);
-  }, [offset, loadingMore, hasMore, selectedLocationId, orderBy, filterFlower, selectedFlowers, dateRange]);
+  }, [offset, loadingMore, hasMore, selectedLocationId, orderBy, filterFlower, selectedFlowers, dateRange, enabled]);
 
   const refresh = useCallback(async () => {
+    if (!enabled) return;
     setReports([]);
     setOffset(0);
     setHasMore(true);
     await fetchReports(0, true);
-  }, [selectedLocationId, orderBy, filterFlower, selectedFlowers, dateRange]);
+  }, [selectedLocationId, orderBy, filterFlower, selectedFlowers, dateRange, enabled]);
 
-  // Reset and fetch when dependencies change
+  // Reset and fetch when dependencies change, but only if enabled
   useEffect(() => {
-    refresh();
-  }, [selectedLocationId, orderBy, filterFlower, selectedFlowers, dateRange]);
+    if (enabled) {
+      refresh();
+    } else {
+      // Clear reports when disabled
+      setReports([]);
+      setOffset(0);
+      setHasMore(true);
+      setLoadingMore(false);
+      setError(null);
+    }
+  }, [enabled, selectedLocationId, orderBy, filterFlower, selectedFlowers, dateRange]);
 
   return {
     reports,

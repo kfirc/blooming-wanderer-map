@@ -35,6 +35,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   // All flowers for ID mapping
   const [allFlowers, setAllFlowers] = useState<Flower[]>([]);
+  const [allFlowersLoading, setAllFlowersLoading] = useState(false);
+  const [shouldLoadReports, setShouldLoadReports] = useState(false);
 
   // USING CUSTOM HOOKS: Date formatter
   const { formatDate } = useDateFormatter();
@@ -63,16 +65,17 @@ const Sidebar: React.FC<SidebarProps> = ({
     [sidebarMode, selectedLocation]
   );
 
-  // USING CUSTOM HOOKS: Reports data for all reports
+  // USING CUSTOM HOOKS: Reports data for all reports - only load when shouldLoadReports is true
   const allReportsData = useReportsData({
     orderBy: filters.orderByField,
     filterFlower: filters.filterFlower,
     selectedFlowers: filters.selectedFlowerFilter,
     dateRange: filters.dateRange,
     pageSize: 5,
+    enabled: shouldLoadReports && !selectedLocation, // Only load when enabled and no specific location
   });
 
-  // USING CUSTOM HOOKS: Reports data for location-specific reports
+  // USING CUSTOM HOOKS: Reports data for location-specific reports - only load when shouldLoadReports is true
   const locationReportsData = useReportsData({
     selectedLocationId: selectedLocation?.id,
     orderBy: filters.orderByField,
@@ -80,14 +83,32 @@ const Sidebar: React.FC<SidebarProps> = ({
     selectedFlowers: filters.selectedFlowerFilter,
     dateRange: filters.dateRange,
     pageSize: 5,
+    enabled: shouldLoadReports && !!selectedLocation, // Only load when enabled and has location
   });
 
   // Load flowers when sidebar opens or on mount
   useEffect(() => {
     if (isOpen) {
-      bloomReportsService.getFlowers().then(setAllFlowers);
+      setAllFlowersLoading(true);
+      setShouldLoadReports(false); // Reset reports loading
+      bloomReportsService.getFlowers()
+        .then(setAllFlowers)
+        .finally(() => setAllFlowersLoading(false));
     }
   }, [isOpen]);
+
+  // Enable reports loading only after all other data has finished loading
+  useEffect(() => {
+    if (isOpen && !allFlowersLoading && !flowersLoading) {
+      // Add a small delay to ensure everything else is rendered first
+      const timer = setTimeout(() => {
+        setShouldLoadReports(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    } else {
+      setShouldLoadReports(false);
+    }
+  }, [isOpen, allFlowersLoading, flowersLoading]);
 
   // Complete reset when sidebar is closed
   useEffect(() => {
@@ -103,6 +124,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         
         // Clear local state
         setAllFlowers([]);
+        setShouldLoadReports(false);
       }, 300); // Match the sidebar animation duration
 
       return () => clearTimeout(timeoutId);

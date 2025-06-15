@@ -30,6 +30,15 @@
 - ✅ Maintains existing behavior for partial selections (add/remove individual flowers)
 - ✅ Still reverts to all selected when last flower is deselected
 
+## Reports Loading Order Changes (June 2025) - COMPLETED
+- ✅ Modified Sidebar component to ensure reports load last after other data
+- ✅ Added `shouldLoadReports` state to control when reports start loading
+- ✅ Added `allFlowersLoading` state to track flowers loading status
+- ✅ Reports now only load after both `flowersLoading` and `allFlowersLoading` are false
+- ✅ Added 100ms delay before enabling reports loading to ensure UI is ready
+- ✅ Updated useReportsData hook with `enabled` parameter for conditional loading
+- ✅ Reports are cleared when `enabled` is false to prevent stale data
+
 ## Architecture Notes
 - The app now fetches locations first, then flowers for each location using dependent queries
 - Map components (MapHeatmap, MapMarkers) now receive `locations` and `locationFlowersQueries` props
