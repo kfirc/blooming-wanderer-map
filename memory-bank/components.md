@@ -54,3 +54,18 @@
   - Logo continuity from loading to interface
   - Map revealed dramatically through circular collapse
 - **Performance**: Pure CSS animations with optimal timing and smooth 60fps transitions 
+
+**Map Markers Hover Effects (Updated 2025-01-19):**
+- **MapMarkers.tsx** now includes hover functionality to make markers larger when hovered
+- **Hover State Management**: 
+  - Added `hoveredMarkerId` state to track which marker is currently hovered
+  - Uses `mouseover` and `mouseout` event handlers on Leaflet markers
+- **Visual Effects**:
+  - Markers scale up by 30% in size when hovered (`size * 1.3`)
+  - Added CSS transition with `transition-transform duration-200` for smooth scaling
+  - Additional `scale-110` class applied to the marker container for enhanced hover effect
+- **Technical Implementation**:
+  - Modified `getMarkerIcon` function to accept `isHovered` parameter
+  - Added separate useEffect to update marker icons when hover state changes
+  - Hover state updates trigger icon regeneration for smooth visual feedback
+- **Performance**: Smooth transitions with 200ms duration for responsive hover feedback 

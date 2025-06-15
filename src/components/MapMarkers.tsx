@@ -21,6 +21,7 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
 }) => {
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
   const [currentZoom, setCurrentZoom] = useState<number>(13);
+  const [hoveredMarkerId, setHoveredMarkerId] = useState<string | null>(null);
 
   // Helper function to calculate current month intensity based on location
   const calculateCurrentMonthIntensity = (location) => {
@@ -42,18 +43,23 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
   };
 
   // Helper to create marker icon HTML and size
-  const getMarkerIcon = useCallback((location, isSelected, zoom) => {
+  const getMarkerIcon = useCallback((location, isSelected, zoom, isHovered = false) => {
     const baseSize = 24;
     const maxSize = 32;
     const scale = Math.pow(2, (zoom - 9) / 2); // 9 is default zoom
-    const size = Math.min(Math.round(baseSize * scale), maxSize);
+    let size = Math.min(Math.round(baseSize * scale), maxSize);
+    
+    // Make marker larger when hovered
+    if (isHovered) {
+      size = Math.min(size * 1.3, maxSize * 1.3);
+    }
     
     const currentIntensity = calculateCurrentMonthIntensity(location);
     const color = getIntensityColor(currentIntensity);
     
     return L.divIcon({
       html: `
-        <div class="relative flex flex-col items-center">
+        <div class="relative flex flex-col items-center transition-transform duration-200 ${isHovered ? 'scale-110' : ''}">
           <svg width="200" height="80" viewBox="0 0 200 80" style="position: absolute; top: -20px; left: 50%; transform: translateX(-50%); pointer-events: none;">
             <defs>
               <path id="arcPath" d="M 40,60 A 60,60 0 0,1 160,100" fill="none" />
@@ -105,7 +111,7 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
         const location = locations.find(l => l.id === id);
         if (location) {
           const isSelected = selectedLocation?.id === location.id;
-          marker.setIcon(getMarkerIcon(location, isSelected, zoom));
+          marker.setIcon(getMarkerIcon(location, isSelected, zoom, hoveredMarkerId === location.id));
         }
       });
     };
@@ -117,7 +123,7 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
     locations.forEach((location) => {
       const { latitude, longitude } = location;
       const isSelected = selectedLocation?.id === location.id;
-      const markerIcon = getMarkerIcon(location, isSelected, zoom);
+      const markerIcon = getMarkerIcon(location, isSelected, zoom, hoveredMarkerId === location.id);
       const marker = L.marker([latitude, longitude], { icon: markerIcon })
         .addTo(map);
 
@@ -143,6 +149,15 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
         onLocationClick(location);
       });
 
+      // Add hover handlers
+      marker.on('mouseover', () => {
+        setHoveredMarkerId(location.id);
+      });
+
+      marker.on('mouseout', () => {
+        setHoveredMarkerId(null);
+      });
+
       markersRef.current[location.id] = marker;
     });
 
@@ -151,7 +166,21 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
     return () => {
       map.off('zoomend', updateMarkerIcons);
     };
-  }, [map, locations, selectedLocation, onLocationClick, mapLoaded, getMarkerIcon]);
+  }, [map, locations, selectedLocation, onLocationClick, mapLoaded, getMarkerIcon, hoveredMarkerId]);
+
+  // Update marker icons when hover state changes
+  useEffect(() => {
+    if (!map || !mapLoaded) return;
+    
+    Object.entries(markersRef.current).forEach(([id, marker]) => {
+      const location = locations.find(l => l.id === id);
+      if (location) {
+        const isSelected = selectedLocation?.id === location.id;
+        const isHovered = hoveredMarkerId === location.id;
+        marker.setIcon(getMarkerIcon(location, isSelected, currentZoom, isHovered));
+      }
+    });
+  }, [hoveredMarkerId, getMarkerIcon, selectedLocation, currentZoom, locations, map, mapLoaded]);
 
   return null; // This component doesn't render anything directly
 };
