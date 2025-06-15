@@ -15,8 +15,11 @@ export const SidebarToggle: React.FC<SidebarToggleProps> = ({ isOpen, onToggle }
       onClick={onToggle}
       className={`
         fixed top-1/2 -translate-y-1/2 z-50 transition-all duration-300 ease-in-out
-        rounded-l-lg rounded-r-none shadow-lg w-8 h-16 p-0
-        ${isOpen ? 'right-96 md:right-96' : 'right-0'}
+        shadow-lg w-8 h-16 p-0
+        ${isOpen 
+          ? 'left-0 rounded-l-none rounded-r-lg md:right-96 md:left-auto md:rounded-l-lg md:rounded-r-none' 
+          : 'right-0 rounded-l-lg rounded-r-none'
+        }
       `}
       aria-label={`${isOpen ? 'סגור' : 'פתח'} סרגל צד`}
     >
