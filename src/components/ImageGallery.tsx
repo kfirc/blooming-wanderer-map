@@ -34,7 +34,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images, isDetailed }) => {
   return (
     <>
       {/* Gallery Grid */}
-      <div className="px-4">
+      <div className="px-4 pb-4">
         {images.length === 1 ? (
           <div 
             className="aspect-video rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"

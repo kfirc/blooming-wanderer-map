@@ -11,7 +11,6 @@ export const SidebarInfoMode: React.FC<SidebarInfoModeProps> = ({
 }) => {
   return (
     <div className="p-8 text-center text-gray-700">
-      <h2 className="text-xl font-bold mb-4">{title}</h2>
       <p>{content}</p>
     </div>
   );

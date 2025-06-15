@@ -172,6 +172,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <SidebarContainer isOpen={isOpen}>
         <SidebarHeader 
           selectedLocation={selectedLocation ? selectedLocation.location : null}
+          sidebarMode={sidebarMode}
         />
         
         <SidebarContent onScroll={handleScroll}>
