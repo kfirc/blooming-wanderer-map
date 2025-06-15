@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, Heart, Camera, Loader2 } from 'lucide-react';
+import React from 'react';
+import { Calendar, Heart } from 'lucide-react';
 import { BloomReport, FlowerPerLocation, Flower } from '../types/BloomReport';
 import FlowersList from './FlowersList';
 import LocationOrderSelect from './LocationOrderSelect';
@@ -7,7 +7,7 @@ import LocationFlowerFilter from './LocationFlowerFilter';
 import ImageGallery from './ImageGallery';
 import { Badge } from './ui/badge';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
-import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from './ui/drawer';
+import { useDateFormatter } from '../hooks/useDateFormatter';
 
 interface ReportsSectionProps {
   flowersPerLocation: FlowerPerLocation[];
@@ -66,39 +66,13 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
   onDateFilterChange,
   onClearFilters,
 }) => {
+  const { formatDate } = useDateFormatter();
 
   // Compute all flower IDs
   const allFlowerIds = flowersPerLocation.map(f => f.flower.id);
 
   const handleClearSelection = () => {
     onClearFilters();
-  };
-
-  // Compute date range for filter
-  const getDateRange = () => {
-    const now = new Date();
-    let from: Date | null = null;
-    switch (dateFilter) {
-      case 'today':
-        from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        break;
-      case 'week':
-        from = new Date(now);
-        from.setDate(now.getDate() - 7);
-        break;
-      case 'month':
-        from = new Date(now);
-        from.setMonth(now.getMonth() - 1);
-        break;
-      case 'year':
-        from = new Date(now);
-        from.setFullYear(now.getFullYear() - 1);
-        break;
-      case 'all':
-      default:
-        from = null;
-    }
-    return from;
   };
 
   // Note: Scroll handling and data fetching is now managed by parent component
@@ -111,18 +85,6 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
       return allFlowers.map(f => ({ id: f.id, name: f.name }));
     }
   }, [flowersPerLocation, allFlowers, sidebarMode]);
-
-  // Add formatDate function for human-readable dates
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays === 1) return 'היום';
-    if (diffDays === 2) return 'אתמול';
-    if (diffDays <= 7) return `לפני ${diffDays} ימים`;
-    return date.toLocaleDateString('he-IL');
-  };
 
   return (
     <div className="p-4 border-t border-gray-200 flex-1 flex flex-col overflow-y-auto">
