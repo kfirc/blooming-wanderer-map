@@ -1,8 +1,24 @@
 # Memory Bank
 
-This folder contains concise, atomic markdown summaries of the main domains and modules in the codebase. Each file covers a specific domain or area, with facts listed as bullet points for easy reference by agents and developers.
+This folder contains organized technical documentation for the Bloom IL project - a flower blooming tracking application for Israel. The documentation is structured for both human developers and AI agents to understand the codebase effectively.
 
-- Each file is named after a domain or module (e.g., `map.md`, `services.md`).
-- Each fact starts with a dash and is on its own line.
-- Facts are concise, atomic, and up-to-date.
-- Update these files incrementally as the codebase evolves. 
+## Organization Structure
+
+### Core Application
+- `project-overview.md` - High-level project description, purpose, and key features
+- `architecture.md` - System architecture, data flow, and technical decisions
+- `deployment.md` - Deployment configuration, environment setup, and known issues
+
+### Implementation Details  
+- `components.md` - React component structure and patterns
+- `data-layer.md` - Database schema, services, and data management
+- `ui-patterns.md` - UI components, styling, and user experience patterns
+
+### Development Context
+- `development-notes.md` - Important development decisions, lessons learned, and technical debt
+
+## Documentation Principles
+- **Self-contained sections**: Each section can be understood independently
+- **Explicit context**: Product names, technical terms, and relationships are clearly stated
+- **Current and accurate**: Information is kept up-to-date with the codebase
+- **Structured for retrieval**: Content is organized for both human and AI consumption 

@@ -65,6 +65,11 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
               <path id="arcPath" d="M 40,60 A 60,60 0 0,1 160,100" fill="none" />
             </defs>
             ${zoom >= 10 ? `
+            <text font-size="15" font-weight="bold" fill="black" text-anchor="middle" font-family="Helvetica" stroke="white" stroke-width="3" paint-order="stroke">
+              <textPath href="#arcPath" startOffset="50%">
+                ${location.name}
+              </textPath>
+            </text>
             <text font-size="15" font-weight="bold" fill="black" text-anchor="middle" font-family="Helvetica">
               <textPath href="#arcPath" startOffset="50%">
                 ${location.name}

@@ -1,0 +1,130 @@
+# Bloom IL - UI Patterns and Design System
+
+## Design System Foundation
+
+### Color Palette
+- **Primary Colors**: Green-to-purple gradient theme reflecting nature and blooming
+- **Background**: Clean white backgrounds with subtle shadows
+- **Text**: High contrast text for accessibility
+- **Accent Colors**: Consistent color scheme across components
+
+### Typography
+- **Font Family**: System fonts for optimal performance and readability
+- **Font Weights**: Strategic use of bold for emphasis and hierarchy
+- **Font Sizes**: Responsive sizing with proper hierarchy
+
+## Component Library (shadcn/ui)
+
+### Core UI Components
+- **Button**: Multiple variants (primary, secondary, outline, ghost) with consistent styling
+- **Card**: Content containers with subtle shadows and rounded corners
+- **Badge**: Tags and labels for categorization with color coding
+- **Separator**: Visual separators for content organization
+- **ScrollArea**: Custom scrollable areas with styled scrollbars
+- **Skeleton**: Loading states with shimmer effects for better UX
+- **Toast**: User feedback notifications with proper positioning
+
+### Form Components
+- **Input**: Styled input fields with focus states
+- **Select**: Dropdown selections with proper keyboard navigation
+- **Checkbox**: Custom checkboxes with proper accessibility
+- **Button Groups**: Related action groupings
+
+## Layout Patterns
+
+### Responsive Design
+- **Mobile-First**: Designed for mobile devices with desktop enhancements
+- **Breakpoint Strategy**: Consistent breakpoints across components
+- **Flexible Layouts**: Components adapt to different screen sizes
+- **Touch-Friendly**: Proper touch targets for mobile interactions
+
+### Sidebar Pattern
+- **Overlay on Mobile**: Full-screen overlay for mobile devices
+- **Side Panel on Desktop**: Fixed sidebar with proper positioning
+- **Animation System**: Smooth open/close animations with proper timing
+- **Content Organization**: Hierarchical content structure within sidebar
+
+### Map Integration
+- **Full-Screen Map**: Map takes full viewport with overlay UI elements
+- **Floating UI**: Header and controls float over map content
+- **Marker System**: Custom SVG markers with consistent styling
+- **Interactive Elements**: Hover states and click interactions
+
+## Visual Effects and Animations
+
+### Loading States
+- **Skeleton Loading**: Shimmer effects for content placeholders
+- **Spinner Components**: Consistent loading indicators
+- **Progressive Loading**: Content loads in logical order
+- **Loading Screen**: Spectacular 4-second loading experience with logo animation
+
+### Hover and Interaction States
+- **Map Markers**: 30% scale increase on hover with 200ms transitions
+- **Button Hover**: Subtle color and shadow changes
+- **Card Hover**: Elevation changes for interactive elements
+- **Focus States**: Clear focus indicators for accessibility
+
+### Transitions and Animations
+- **Smooth Transitions**: 200-300ms duration for most interactions
+- **Easing Functions**: Natural easing curves for organic feel
+- **Performance**: CSS-based animations for optimal performance
+- **Reduced Motion**: Respects user preferences for reduced motion
+
+## Accessibility Patterns
+
+### Keyboard Navigation
+- **Tab Order**: Logical tab order through interactive elements
+- **Focus Management**: Proper focus handling in modals and overlays
+- **Keyboard Shortcuts**: Standard keyboard interactions supported
+
+### Screen Reader Support
+- **Semantic HTML**: Proper HTML structure for screen readers
+- **ARIA Labels**: Descriptive labels for complex interactions
+- **Alt Text**: Meaningful alt text for images and visual elements
+- **Heading Hierarchy**: Proper heading structure for navigation
+
+### Color and Contrast
+- **High Contrast**: Text meets WCAG contrast requirements
+- **Color Independence**: Information not conveyed by color alone
+- **Focus Indicators**: Clear visual focus indicators
+
+## Data Visualization Patterns
+
+### Map Visualization
+- **Custom Markers**: SVG-based markers with consistent styling
+- **Heatmap Layer**: Intensity visualization with color gradients
+- **Zoom-Responsive**: Elements scale appropriately with zoom level
+- **Information Hierarchy**: Clear visual hierarchy for map elements
+
+### Chart Components
+- **Monthly Intensity Chart**: Data visualization for bloom trends
+- **Consistent Styling**: Charts match overall design system
+- **Interactive Elements**: Hover states and tooltips for data points
+
+## Content Patterns
+
+### Image Handling
+- **Image Gallery**: Consistent image display patterns
+- **Lazy Loading**: Performance optimization for image loading
+- **Responsive Images**: Proper sizing for different screen sizes
+- **Fallback States**: Graceful handling of missing images
+
+### Text Content
+- **Content Hierarchy**: Clear heading and text hierarchy
+- **Reading Flow**: Logical content organization
+- **Truncation**: Proper text truncation with ellipsis
+- **Line Height**: Optimal line spacing for readability
+
+## Performance Considerations
+
+### CSS Optimization
+- **Tailwind CSS**: Utility-first CSS for consistent styling
+- **Purged CSS**: Unused styles removed in production
+- **Critical CSS**: Above-the-fold styles prioritized
+- **CSS-in-JS**: Minimal runtime CSS generation
+
+### Animation Performance
+- **GPU Acceleration**: Transform and opacity animations for smooth performance
+- **Frame Rate**: 60fps animations with proper timing
+- **Memory Management**: Efficient animation cleanup
+- **Battery Consideration**: Reduced animations on low-power devices 

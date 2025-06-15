@@ -1,3 +1,0 @@
-- The `src/lib/` directory contains utility and helper functions.
-- `utils.ts` provides general-purpose utility functions for the app.
-- Lib functions are imported where needed to avoid code duplication. 

@@ -1,71 +1,101 @@
-- Main UI components are located in `src/components/`.
-- `Sidebar.tsx` provides navigation or filtering options for the app.
-- `Header.tsx` displays the app title or navigation bar.
-- `ImageGallery.tsx` displays images related to bloom reports.
-- Components are designed for modularity and reuse in the UI.
-- `Sidebar.tsx` now receives its open state, mode (`'location'` or `'info'`), and data as props from the main page. It displays either location details (including flowers and reports) or info content, depending on mode.
-- The sidebar opens immediately when a location is clicked, and shows a loading spinner for flowers until the data is loaded.
-- `FlowersList.tsx` receives its data and loading state as props, and no longer fetches data internally.
-- The reports section in the sidebar shows a loading spinner if reports are loading (placeholder for now).
-- `MapHeader.tsx` receives an `onInfoClick` prop, which opens the sidebar in info mode when triggered.
-- The sidebar content resets to default only after the close animation completes (300ms delay).
+# Bloom IL - Component Architecture
+
+## Component Organization Strategy
+Bloom IL follows a modular component architecture with clear separation of concerns:
+
+### Main Application Components
+- **Index.tsx**: Main page component orchestrating map and sidebar interaction
+- **Map.tsx**: Interactive Leaflet map displaying bloom report locations with markers and heatmap
+- **Sidebar**: Decomposed into multiple focused components (see Sidebar Architecture below)
+
+### Sidebar Architecture (Decomposed Design)
+The sidebar was refactored from a monolithic 394-line component into focused, reusable components:
+
+**Container & Layout**:
+- **SidebarContainer.tsx**: Positioning, animations, and responsive behavior
+- **SidebarOverlay.tsx**: Mobile overlay for sidebar interactions
+- **SidebarToggle.tsx**: Toggle button with proper accessibility
+
+**Content Components**:
+- **SidebarHeader.tsx**: Location information and Waze navigation integration
+- **SidebarContent.tsx**: Scrollable content area with proper scroll handling
+- **SidebarInfoMode.tsx**: Information display mode for location details
+- **LocationCard.tsx**: Enhanced location card with improved UX
+
+### Feature Components
+- **FlowersList.tsx**: Flower type selection and filtering interface
+- **ReportsSection.tsx**: Bloom reports display with filtering and pagination
+- **MonthlyIntensityChart.tsx**: Data visualization for bloom intensity trends
+- **MapHeader.tsx**: Header component with info button functionality
+- **ImageGallery.tsx**: Image display component for bloom reports
+
+### UI Component System (shadcn/ui)
+Consistent design system with reusable components:
+- **Button**: Multiple variants (primary, secondary, outline, ghost)
+- **Card**: Content containers with consistent styling
+- **Badge**: Tags and labels for categorization
+- **ScrollArea**: Custom scrollable areas with proper styling
+- **Skeleton**: Loading states for better UX
+- **Toast**: User feedback and notifications
+
+## Component Design Principles
+
+### Single Responsibility Principle
+Each component has a focused, single purpose:
+- **Presentational Components**: Focus on UI rendering and user interaction
+- **Container Components**: Handle state management and data coordination
+- **Custom Hooks**: Extract reusable logic and state management
+
+### State Management Pattern
+- **Local State**: Component-specific state using useState
+- **Shared State**: Custom hooks for cross-component state coordination
+- **Data Fetching**: Service layer with proper loading and error states
+- **No Global State**: Avoided Redux/Context for application simplicity
+
+### Performance Optimizations
+- **Memoization**: useMemo and useCallback for expensive computations
+- **Component Splitting**: Logical separation to prevent unnecessary re-renders
+- **Backend-Driven Operations**: Filtering and pagination handled server-side
+
+## Custom Hooks Architecture
+Reusable state logic extracted into focused custom hooks:
+
+- **useSidebarState**: Sidebar open/close state management
+- **useReportsData**: Data fetching with pagination and filtering
+- **useDateFormatter**: Consistent date formatting across components
+- **useFilters**: Centralized filter state management (orderBy, flower types, date ranges)
+- **use-toast**: Toast notification logic for user feedback
+- **use-mobile**: Mobile device detection for responsive behavior
+
+## Map Component Features
+
+### Interactive Map (Map.tsx)
+- **Leaflet.js Integration**: Interactive map centered on Israel
+- **Bloom Report Markers**: Custom markers showing report locations
+- **Heatmap Visualization**: Intensity visualization across locations
+- **Marker Interactions**: Click handlers for report selection
+- **OpenStreetMap Tiles**: Base map layer
+
+### Map Markers (MapMarkers.tsx)
+- **Custom SVG Markers**: Triangle-shaped markers with zoom-responsive sizing
+- **Location Labels**: Curved text above markers (visible at zoom >= 10) with white stroke background for readability
+- **Hover Effects**: Markers scale up 30% on hover with smooth 200ms transitions
+- **Visual Effects**: Drop shadow, opacity, and scaling animations
+
+## Loading Experience
+
+### Loading Screen System
+- **Three-Phase Animation**: Snake dash → stretch → spectacular transition
+- **Seamless Transitions**: 4-second total experience with coordinated timing
+- **Logo Animation**: Moves from center to header position with scaling
+- **Background Collapse**: Circular collapse animation revealing map
+- **Performance**: Pure CSS animations with 60fps smooth transitions
+
+## Type Safety & Development Experience
+- **Full TypeScript Coverage**: All components have proper type definitions
+- **Generated Types**: Supabase types automatically generated and maintained
+- **Interface Consistency**: Standardized prop interfaces across similar components
+- **Development Tools**: ESLint and TypeScript for code quality
 
 **Build Issues Fixed:**
-- Fixed CSS syntax error in `LoadingScreen.css`: removed extra closing brace at line 267
-- Error was caused by mismatched braces in `@media (prefers-reduced-motion: reduce)` block
-- Build now completes successfully with `npm run build` command
-- PostCSS parsing error resolved
-
-**Loading Screen Spectacular Transition System (Updated 2025-01-19):**
-- **Three-Phase Experience**: 
-  1. **Phase 1 (0-1s)**: Snake dash completes final rotation
-  2. **Phase 2 (1-2s)**: Fast stretch to full circle (same speed as snake)
-  3. **Phase 3 (2-4s)**: Spectacular transition to map view
-- **Seamless Animation**: `snake-then-stretch 2s linear forwards`
-  - Both phases run at equal speed for consistent visual rhythm
-  - No delays or gaps between animation phases
-- **Spectacular Transition Effects**:
-  - **Logo Movement**: Animates from center to exact header position with precise scaling (`move-logo-to-header 2.2s ease-in-out`)
-  - **Background Collapse**: White screen collapses into the logo itself at header position (`collapse-to-circle 2.2s ease-in-out`)
-  - **Title Fade**: Loading title fades out during transition (`fade-out 0.5s ease-out`)
-  - **Map Reveal**: Map loads behind and becomes visible as circle collapses into logo
-- **Advanced CSS Techniques**:
-  - `clip-path: circle()` for smooth circular collapse animation
-  - Absolute positioning with transform animations for logo movement
-  - Z-index layering for proper overlay management
-  - Coordinated timing between multiple animation phases
-- **SVG Implementation**: Uses `stroke-dasharray` and `stroke-dashoffset` for smooth animation
-- **Technical Details**: 
-  - Circle radius: 60px, circumference ≈ 377px
-  - Snake pattern: `stroke-dasharray: 60 317` (60px dash + 317px gap = 377px total)
-  - Logo scales from 1.0 to 0.4 while moving to header position
-  - Collapse animation uses clip-path from 100% to 0% at header position
-- **Timing Logic**: 
-  - Snake + stretch: 2s (1s each phase)
-  - Spectacular transition: 2s (logo movement + background collapse)
-  - Total experience: 4s (2s animation + 2s transition)
-- **Visual Design**: 
-  - Gradient stroke with green-to-purple color transition
-  - Smooth morphing from loading screen to map interface
-  - Logo seamlessly becomes part of header
-- **Enhanced UX**: 
-  - Cinematic transition experience
-  - No jarring cuts or sudden changes
-  - Logo continuity from loading to interface
-  - Map revealed dramatically through circular collapse
-- **Performance**: Pure CSS animations with optimal timing and smooth 60fps transitions 
-
-**Map Markers Hover Effects (Updated 2025-01-19):**
-- **MapMarkers.tsx** now includes hover functionality to make markers larger when hovered
-- **Hover State Management**: 
-  - Added `hoveredMarkerId` state to track which marker is currently hovered
-  - Uses `mouseover` and `mouseout` event handlers on Leaflet markers
-- **Visual Effects**:
-  - Markers scale up by 30% in size when hovered (`size * 1.3`)
-  - Added CSS transition with `transition-transform duration-200` for smooth scaling
-  - Additional `scale-110` class applied to the marker container for enhanced hover effect
-- **Technical Implementation**:
-  - Modified `getMarkerIcon` function to accept `isHovered` parameter
-  - Added separate useEffect to update marker icons when hover state changes
-  - Hover state updates trigger icon regeneration for smooth visual feedback
-- **Performance**: Smooth transitions with 200ms duration for responsive hover feedback 
+- Fixed CSS syntax error in `

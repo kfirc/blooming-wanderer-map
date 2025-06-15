@@ -1,6 +1,0 @@
-- The main domain types are defined in `src/types/BloomReport.ts`.
-- `BloomReport` represents a flower bloom report submitted by a user.
-- Each BloomReport includes location, user, images, flower types, and metadata.
-- `Location` represents a physical place with latitude, longitude, and intensity.
-- `User` represents a person who submits reports, with Facebook info and profile photo.
-- Types are used throughout the app for type safety and data modeling. 

@@ -1,8 +1,0 @@
-- The bloomReportsService is located at `src/services/bloomReportsService.ts`.
-- It provides CRUD operations for bloom reports, locations, and users.
-- It uses Supabase as the backend database.
-- The service fetches all reports, recent reports, and all locations.
-- It supports creating new locations, users, and reports.
-- It allows updating the likes count for a report.
-- All data operations are asynchronous and return Promises.
-- The service joins location and user data when fetching reports. 

@@ -1,4 +1,0 @@
-- Custom hooks are located in `src/hooks/`.
-- `use-toast.ts` provides toast notification logic for the UI.
-- `use-mobile.tsx` detects if the app is running on a mobile device.
-- Hooks encapsulate reusable logic for components. 
