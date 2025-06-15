@@ -14,7 +14,7 @@ interface ReportsSectionProps {
   isLoadingFlowers: boolean;
   flowersError: unknown;
   fetchReports: (args: { offset: number, reset: boolean, orderBy: string, filterFlower: string, selectedFlowers?: string[], fromDate?: string }) => Promise<BloomReport[]>;
-  initialReports: BloomReport[];
+  reports: BloomReport[];
   hasMore: boolean;
   loadingMore: boolean;
   sidebarMode: 'location' | 'info' | 'all';
@@ -37,7 +37,7 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
   isLoadingFlowers,
   flowersError,
   fetchReports,
-  initialReports,
+  reports,
   hasMore,
   loadingMore,
   sidebarMode,
@@ -50,7 +50,6 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
   const [orderBy, setOrderBy] = useState<'date' | 'likes'>('date');
   const [filterFlower, setFilterFlower] = useState<string>('__all__');
   const [selectedFlowers, setSelectedFlowers] = useState<string[]>([]);
-  const [reports, setReports] = useState<BloomReport[]>(initialReports);
   const [offset, setOffset] = useState(0);
   const [internalHasMore, setInternalHasMore] = useState(hasMore);
   const [internalLoadingMore, setInternalLoadingMore] = useState(loadingMore);
@@ -114,7 +113,6 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
 
   // Fetch reports when filters change
   useEffect(() => {
-    setReports([]);
     setOffset(0);
     setInternalHasMore(true);
     fetchMoreReports(0, true);
@@ -140,7 +138,6 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
       if (newReports.length < 5) {
         setInternalHasMore(false);
       }
-      setReports(prev => reset ? newReports : [...prev, ...newReports]);
       setOffset(prev => reset ? 5 : prev + 5);
     } catch (error) {
       // handle error
@@ -222,14 +219,11 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
         </div>
       </div>
       {/* Reports List */}
-      <div className="space-y-4 mt-4 flex-1">
-        {internalLoadingMore && reports.length === 0 ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
-            <span className="ml-2 text-gray-600">טוען דיווחים...</span>
-          </div>
-        ) : reports.length > 0 ? (
-          reports.map((report) => (
+      {reports.length === 0 && !loadingMore ? (
+        <div className="text-center text-gray-500 py-8">לא נמצאו דיווחים</div>
+      ) : (
+        <div className="space-y-4">
+          {reports.map((report, idx) => (
             <div key={report.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow text-right" dir="rtl">
               {/* Header */}
               <div className="p-4 pb-3">
@@ -279,14 +273,9 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
               )}
               {/* Actions, etc. can be added here */}
             </div>
-          ))
-        ) : (
-          <div className="text-center text-gray-600 py-8">
-            <Camera className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-            <p>אין דיווחים להצגה</p>
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
       {internalLoadingMore && reports.length > 0 && (
         <div className="text-center py-4 text-gray-500">
           טוען עוד דיווחים...

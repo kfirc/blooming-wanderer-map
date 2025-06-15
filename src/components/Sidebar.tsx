@@ -298,7 +298,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, reports, selectedLo
                     );
                   }
                 }}
-                initialReports={selectedLocation ? locationReports : allReports}
+                reports={selectedLocation ? locationReports : allReports}
                 hasMore={selectedLocation ? locationHasMore : hasMore}
                 loadingMore={selectedLocation ? locationLoading : loadingMore}
                 sidebarMode={computedSidebarMode}
