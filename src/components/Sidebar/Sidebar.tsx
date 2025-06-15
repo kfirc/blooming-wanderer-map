@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { BloomReport, FlowerPerLocation, Flower } from '../../types/BloomReport';
+import { Location, FlowerPerLocation, Flower } from '../../types/BloomReport';
 import { bloomReportsService } from '../../services/bloomReportsService';
 import ReportsSection from '../ReportsSection';
 import { useReportsData } from '../../hooks/useReportsData';
@@ -17,8 +17,7 @@ import {
 interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
-  reports: BloomReport[];
-  selectedLocation: BloomReport | null;
+  selectedLocation: Location | null;
   sidebarMode: 'location' | 'info';
   flowersPerLocation: FlowerPerLocation[];
   flowersLoading: boolean;
@@ -28,7 +27,6 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
   onToggle,
-  reports,
   selectedLocation,
   sidebarMode,
   flowersPerLocation,
@@ -76,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // USING CUSTOM HOOKS: Reports data for location-specific reports
   const locationReportsData = useReportsData({
-    selectedLocationId: selectedLocation?.location.id,
+    selectedLocationId: selectedLocation?.id,
     orderBy: filters.orderByField,
     filterFlower: filters.filterFlower,
     selectedFlowers: filters.selectedFlowerFilter,
@@ -145,7 +143,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     
     if (selectedLocation) {
       return bloomReportsService.getReportsForLocationWithPagination(
-        selectedLocation.location.id,
+        selectedLocation.id,
         offset,
         5,
         orderByField,
@@ -171,7 +169,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       
       <SidebarContainer isOpen={isOpen}>
         <SidebarHeader 
-          selectedLocation={selectedLocation ? selectedLocation.location : null}
+          selectedLocation={selectedLocation}
           sidebarMode={sidebarMode}
         />
         
@@ -187,8 +185,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               hasMore={currentReportsData.hasMore}
               loadingMore={currentReportsData.loadingMore}
               sidebarMode={computedSidebarMode}
-              locationName={selectedLocation ? selectedLocation.location.name : undefined}
-              locationId={selectedLocation ? selectedLocation.location.id : undefined}
+              locationName={selectedLocation ? selectedLocation.name : undefined}
+              locationId={selectedLocation ? selectedLocation.id : undefined}
               flowerIdToName={flowerIdToName}
               allFlowers={allFlowers}
               // Filter props

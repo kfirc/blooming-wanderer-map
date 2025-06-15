@@ -1,15 +1,16 @@
 
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import { BloomReport } from '../types/BloomReport';
+import { Location } from '../types/BloomReport';
 
 interface MapHeatmapProps {
   map: L.Map | null;
-  reports: BloomReport[];
+  locations: Location[];
+  locationFlowersQueries: Array<{ data?: any; isLoading: boolean; error?: any }>;
   mapLoaded: boolean;
 }
 
-const MapHeatmap: React.FC<MapHeatmapProps> = ({ map, reports, mapLoaded }) => {
+const MapHeatmap: React.FC<MapHeatmapProps> = ({ map, locations, locationFlowersQueries, mapLoaded }) => {
   const heatmapLayerRef = useRef<L.LayerGroup | null>(null);
 
   useEffect(() => {
@@ -23,9 +24,12 @@ const MapHeatmap: React.FC<MapHeatmapProps> = ({ map, reports, mapLoaded }) => {
     // Clear existing heatmap
     heatmapLayerRef.current.clearLayers();
 
-    reports.forEach((report) => {
-      const { latitude, longitude } = report.location;
-      const intensity = report.location.intensity;
+    // Guard against undefined locations
+    if (!locations || !Array.isArray(locations)) return;
+
+    locations.forEach((location) => {
+      const { latitude, longitude } = location;
+      const intensity = location.intensity || 0.5; // Default intensity if not provided
       const radius = Math.max(50, intensity * 200);
       const color = intensity > 0.7 ? '#ef4444' : intensity > 0.4 ? '#f97316' : '#eab308';
       
@@ -40,7 +44,7 @@ const MapHeatmap: React.FC<MapHeatmapProps> = ({ map, reports, mapLoaded }) => {
       
       heatmapLayerRef.current!.addLayer(heatCircle);
     });
-  }, [map, reports, mapLoaded]);
+  }, [map, locations, locationFlowersQueries, mapLoaded]);
 
   return null; // This component doesn't render anything directly
 };

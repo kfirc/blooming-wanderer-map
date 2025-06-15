@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueries } from '@tanstack/react-query';
 import Map from '../components/Map';
-import { BloomReport, FlowerPerLocation } from '../types/BloomReport';
+import { Location, FlowerPerLocation } from '../types/BloomReport';
 import { bloomReportsService } from '../services/bloomReportsService';
 import MapHeader from '../components/MapHeader';
 import Sidebar from '../components/Sidebar';
@@ -9,7 +9,7 @@ import LoadingScreen from '../components/LoadingScreen';
 import { useSidebarState } from '../hooks/useSidebarState';
 
 const Index = () => {
-  const [selectedLocation, setSelectedLocation] = useState<BloomReport | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [sidebarMode, setSidebarMode] = useState<'location' | 'info'>('location');
   const [loadingComplete, setLoadingComplete] = useState(false);
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
@@ -19,28 +19,38 @@ const Index = () => {
   // USING CUSTOM HOOK: Sidebar state management
   const sidebar = useSidebarState(false);
 
-  // Fetch bloom reports using React Query
-  const { data: reports = [], isLoading, error } = useQuery({
-    queryKey: ['bloom-reports'],
-    queryFn: bloomReportsService.getRecentReports,
+  // Fetch all locations using React Query
+  const { data: locations = [], isLoading, error } = useQuery({
+    queryKey: ['locations'],
+    queryFn: bloomReportsService.getLocations,
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
-  // Fetch flowers for selected location
+  // Fetch flowers for each location using dependent queries
+  const locationFlowersQueries = useQueries({
+    queries: locations.map((location) => ({
+      queryKey: ['flowers-per-location', location.id],
+      queryFn: () => bloomReportsService.getFlowersForLocation(location.id),
+      staleTime: 5 * 60 * 1000,
+      enabled: !!location.id,
+    })),
+  });
+
+  // Fetch flowers for selected location specifically for sidebar
   const {
     data: flowersPerLocation = [],
     isLoading: flowersLoading,
     error: flowersError,
   } = useQuery<FlowerPerLocation[], unknown>({
-    queryKey: ['flowers-per-location', selectedLocation?.location.id],
-    queryFn: () => selectedLocation ? bloomReportsService.getFlowersForLocation(selectedLocation.location.id) : Promise.resolve([]),
+    queryKey: ['flowers-per-location', selectedLocation?.id],
+    queryFn: () => selectedLocation ? bloomReportsService.getFlowersForLocation(selectedLocation.id) : Promise.resolve([]),
     enabled: !!selectedLocation && sidebar.isOpen && sidebarMode === 'location',
     staleTime: 5 * 60 * 1000,
   });
 
   // Handle loading screen animation sequence
   useEffect(() => {
-    if (!isLoading && reports.length > 0) {
+    if (!isLoading && locations.length > 0) {
       // Start the snake animation immediately when loading completes
       setLoadingComplete(true);
       
@@ -60,10 +70,10 @@ const Index = () => {
         clearTimeout(hideTimer);
       };
     }
-  }, [isLoading, reports.length]);
+  }, [isLoading, locations.length]);
 
-  const handleLocationClick = (report: BloomReport) => {
-    setSelectedLocation(report);
+  const handleLocationClick = (location: Location) => {
+    setSelectedLocation(location);
     setSidebarMode('location');
     sidebar.open();
   };
@@ -105,14 +115,14 @@ const Index = () => {
     <div className="h-screen w-full bg-gradient-to-br from-green-50 to-purple-50">
       <div className="h-full w-full relative">
         <Map 
-          reports={reports} 
+          locations={locations} 
+          locationFlowersQueries={locationFlowersQueries}
           onLocationClick={handleLocationClick}
           selectedLocation={selectedLocation}
         />
         <Sidebar 
           isOpen={sidebar.isOpen}
           onToggle={handleToggleSidebar}
-          reports={selectedLocation ? reports.filter(r => r.location.id === selectedLocation.location.id) : reports}
           selectedLocation={selectedLocation}
           sidebarMode={sidebarMode}
           flowersPerLocation={flowersPerLocation}

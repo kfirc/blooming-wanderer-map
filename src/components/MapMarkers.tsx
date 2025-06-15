@@ -1,18 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { BloomReport } from '../types/BloomReport';
+import { Location } from '../types/BloomReport';
 
 interface MapMarkersProps {
   map: L.Map | null;
-  reports: BloomReport[];
-  selectedLocation: BloomReport | null;
-  onLocationClick: (report: BloomReport) => void;
+  locations: Location[];
+  locationFlowersQueries: Array<{ data?: unknown; isLoading: boolean; error?: unknown }>;
+  selectedLocation: Location | null;
+  onLocationClick: (location: Location) => void;
   mapLoaded: boolean;
 }
 
 const MapMarkers: React.FC<MapMarkersProps> = ({
   map,
-  reports,
+  locations,
+  locationFlowersQueries,
   selectedLocation,
   onLocationClick,
   mapLoaded
@@ -20,33 +22,10 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
   const [currentZoom, setCurrentZoom] = useState<number>(13);
 
-  // Helper function to calculate current month intensity based on flowers
-  const calculateCurrentMonthIntensity = (report) => {
-    const currentMonth = new Date().getMonth() + 1; // 1-12
-    
-    if (!report.flowers || report.flowers.length === 0) {
-      return 0.1; // Default low intensity if no flower data
-    }
-    
-    let totalIntensity = 0;
-    let flowerCount = 0;
-    
-    report.flowers.forEach(flower => {
-      if (flower.bloom_months && flower.bloom_months.includes(currentMonth)) {
-        // Flower is in bloom this month
-        const intensity = flower.intensity || 0.5; // Default to medium if no intensity data
-        totalIntensity += intensity;
-        flowerCount++;
-      }
-    });
-    
-    if (flowerCount === 0) {
-      // No flowers in bloom this month, use reduced intensity
-      return 0.2;
-    }
-    
-    // Average intensity of blooming flowers
-    return Math.min(1, totalIntensity / flowerCount);
+  // Helper function to calculate current month intensity based on location
+  const calculateCurrentMonthIntensity = (location) => {
+    // Use location intensity if available, otherwise default
+    return location.intensity || 0.5;
   };
 
   // Color gradient from red (lowest intensity) to green (highest intensity)
@@ -63,13 +42,13 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
   };
 
   // Helper to create marker icon HTML and size
-  const getMarkerIcon = (report, isSelected, zoom) => {
+  const getMarkerIcon = useCallback((location, isSelected, zoom) => {
     const baseSize = 24;
     const maxSize = 32;
     const scale = Math.pow(2, (zoom - 9) / 2); // 9 is default zoom
     const size = Math.min(Math.round(baseSize * scale), maxSize);
     
-    const currentIntensity = calculateCurrentMonthIntensity(report);
+    const currentIntensity = calculateCurrentMonthIntensity(location);
     const color = getIntensityColor(currentIntensity);
     
     return L.divIcon({
@@ -82,21 +61,21 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
             ${zoom >= 10 ? `
             <text font-size="15" font-weight="bold" fill="black" text-anchor="middle" font-family="Helvetica">
               <textPath href="#arcPath" startOffset="50%">
-                ${report.location.name}
+                ${location.name}
               </textPath>
             </text>
             ` : ''}
           </svg>
           <svg width="${size}" height="${size}" style="margin-top: 18px;">
             <defs>
-              <filter id="shadow-${report.id}" x="-50%" y="-50%" width="200%" height="200%">
+              <filter id="shadow-${location.id}" x="-50%" y="-50%" width="200%" height="200%">
                 <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.15"/>
               </filter>
             </defs>
             <polygon 
               points="${size/2},${size-4} ${4},${4} ${size-4},${4}"
               fill="${color}"
-              filter="url(#shadow-${report.id})"
+              filter="url(#shadow-${location.id})"
               opacity="0.9"
             />
           </svg>
@@ -106,24 +85,27 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
       iconSize: [size, size + 40],
       iconAnchor: [size / 2, size],
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (!map || !mapLoaded) return;
 
     setCurrentZoom(map.getZoom());
 
-    console.log('Updating markers with reports:', reports.length);
+    // Guard against undefined locations
+    if (!locations || !Array.isArray(locations)) return;
+
+    console.log('Updating markers with locations:', locations.length);
 
     // Helper to update all marker icons on zoom
     const updateMarkerIcons = () => {
       const zoom = map.getZoom();
       setCurrentZoom(zoom);
       Object.entries(markersRef.current).forEach(([id, marker]) => {
-        const report = reports.find(r => r.id === id);
-        if (report) {
-          const isSelected = selectedLocation?.id === report.id;
-          marker.setIcon(getMarkerIcon(report, isSelected, zoom));
+        const location = locations.find(l => l.id === id);
+        if (location) {
+          const isSelected = selectedLocation?.id === location.id;
+          marker.setIcon(getMarkerIcon(location, isSelected, zoom));
         }
       });
     };
@@ -132,31 +114,23 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
     Object.values(markersRef.current).forEach(marker => marker.remove());
     markersRef.current = {};
     const zoom = map.getZoom();
-    reports.forEach((report) => {
-      const { latitude, longitude } = report.location;
-      const isSelected = selectedLocation?.id === report.id;
-      const markerIcon = getMarkerIcon(report, isSelected, zoom);
+    locations.forEach((location) => {
+      const { latitude, longitude } = location;
+      const isSelected = selectedLocation?.id === location.id;
+      const markerIcon = getMarkerIcon(location, isSelected, zoom);
       const marker = L.marker([latitude, longitude], { icon: markerIcon })
         .addTo(map);
 
-      // Add popup with report details
+      // Add popup with location details
       const popupContent = `
         <div class="p-2 max-w-48">
           <div class="flex items-center space-x-2 mb-2">
-            <img 
-              src="${report.user.profile_photo_url || 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=24&h=24&fit=crop&crop=face'}" 
-              alt="${report.user.display_name}"
-              class="w-6 h-6 rounded-full"
-            />
-            <span class="font-medium text-sm">${report.user.display_name}</span>
+            <span class="font-medium text-sm">${location.name}</span>
           </div>
-          <p class="text-xs text-gray-600 mb-2 line-clamp-2">${report.description || ''}</p>
+          <p class="text-xs text-gray-600 mb-2 line-clamp-2">Location: ${location.name}</p>
           <div class="flex items-center justify-between text-xs text-gray-500">
             <div class="flex items-center space-x-1">
-              <span>📸 ${report.images.length}</span>
-            </div>
-            <div class="flex items-center space-x-1">
-              <span>⚡ ${report.likes_count}</span>
+              <span>📍 ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}</span>
             </div>
           </div>
         </div>
@@ -166,10 +140,10 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
 
       // Add click handler
       marker.on('click', () => {
-        onLocationClick(report);
+        onLocationClick(location);
       });
 
-      markersRef.current[report.id] = marker;
+      markersRef.current[location.id] = marker;
     });
 
     // Listen for zoom events to update marker size
@@ -177,7 +151,7 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
     return () => {
       map.off('zoomend', updateMarkerIcons);
     };
-  }, [map, reports, selectedLocation, onLocationClick, mapLoaded]);
+  }, [map, locations, selectedLocation, onLocationClick, mapLoaded, getMarkerIcon]);
 
   return null; // This component doesn't render anything directly
 };

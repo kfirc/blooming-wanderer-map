@@ -2,16 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './LeafletMap.css';
-import { BloomReport } from '../types/BloomReport';
+import { Location } from '../types/BloomReport';
 import MapMarkers from './MapMarkers';
 import MapHeatmap from './MapHeatmap';
 import MapHeader from './MapHeader';
 import MapActionButtons from './MapActionButtons';
 
 interface MapProps {
-  reports: BloomReport[];
-  onLocationClick: (report: BloomReport) => void;
-  selectedLocation: BloomReport | null;
+  locations: Location[];
+  locationFlowersQueries: Array<{ data?: any; isLoading: boolean; error?: any }>;
+  onLocationClick: (location: Location) => void;
+  selectedLocation: Location | null;
 }
 
 // Fix for default marker icons in Leaflet
@@ -22,7 +23,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation }) => {
+const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocationClick, selectedLocation }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMap = useRef<L.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -92,13 +93,15 @@ const Map: React.FC<MapProps> = ({ reports, onLocationClick, selectedLocation })
       {/* Map Components */}
       <MapHeatmap 
         map={leafletMap.current}
-        reports={reports}
+        locations={locations}
+        locationFlowersQueries={locationFlowersQueries}
         mapLoaded={mapLoaded}
       />
       
       <MapMarkers 
         map={leafletMap.current}
-        reports={reports}
+        locations={locations}
+        locationFlowersQueries={locationFlowersQueries}
         selectedLocation={selectedLocation}
         onLocationClick={onLocationClick}
         mapLoaded={mapLoaded}
