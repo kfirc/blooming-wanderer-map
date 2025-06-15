@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './LeafletMap.css';
 import { Location } from '../types/BloomReport';
-import MapMarkers from './MapMarkers';
+import MapMarkers from './map/MapMarkers';
 import MapHeatmap from './MapHeatmap';
 import MapHeader from './MapHeader';
 import MapActionButtons from './MapActionButtons';
@@ -62,6 +62,46 @@ const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocation
       }
     };
   }, []);
+
+  // Add keyboard event handling for custom zoom
+  useEffect(() => {
+    if (!leafletMap.current) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Cmd+Plus or Cmd+Minus (Mac) or Ctrl+Plus/Ctrl+Minus (Windows/Linux)
+      const isZoomKey = (e.metaKey || e.ctrlKey) && (
+        e.key === '+' || e.key === '=' || // Plus key variations
+        e.key === '-' || e.key === '_' || // Minus key variations
+        e.code === 'Equal' || e.code === 'Minus' || // Key codes
+        e.code === 'NumpadAdd' || e.code === 'NumpadSubtract' // Numpad keys
+      );
+
+      if (isZoomKey && leafletMap.current) {
+        e.preventDefault(); // Prevent browser zoom
+        e.stopPropagation();
+
+        const currentZoom = leafletMap.current.getZoom();
+        const zoomStep = 1;
+
+        if (e.key === '+' || e.key === '=' || e.code === 'Equal' || e.code === 'NumpadAdd') {
+          // Zoom in
+          const newZoom = Math.min(currentZoom + zoomStep, leafletMap.current.getMaxZoom());
+          leafletMap.current.setZoom(newZoom);
+        } else if (e.key === '-' || e.key === '_' || e.code === 'Minus' || e.code === 'NumpadSubtract') {
+          // Zoom out
+          const newZoom = Math.max(currentZoom - zoomStep, leafletMap.current.getMinZoom());
+          leafletMap.current.setZoom(newZoom);
+        }
+      }
+    };
+
+    // Add event listener with passive: false to allow preventDefault
+    document.addEventListener('keydown', handleKeyDown, { passive: false });
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mapLoaded]);
 
   if (mapError) {
     return (

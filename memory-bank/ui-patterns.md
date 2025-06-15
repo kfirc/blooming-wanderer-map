@@ -90,11 +90,24 @@
 
 ## Data Visualization Patterns
 
-### Map Visualization
+### Map Components
+- **Interactive Map**: Leaflet-based map with custom styling
 - **Custom Markers**: SVG-based markers with consistent styling
+  - **Triangle Shape**: Polygon with black stroke border (`stroke="black"` and `stroke-width="1"`)
+  - **Real-time Smooth Scaling**: Markers scale smoothly during zoom using CSS transforms applied in real-time
+  - **Dual-Phase Scaling**: CSS transforms for immediate visual feedback + icon updates for final positioning
+  - **Transform Properties**: `transform: scale()`, `transform-origin: center bottom`, `transition: transform 0.1s ease-out`
+  - **Enhanced Transitions**: 0.5s duration with custom cubic-bezier for smoother shrinking on zoom out
+  - **Anti-Jump Logic**: Prevents size jumping during zoom by using transform-based scaling during animation
+  - **Granular Sizing**: Size range 16-36px with gentler scaling curve (0.15 factor per zoom level)
+  - **Zoom Event Handling**: Uses `zoomstart`, `zoom`, and `zoomend` events for precise control
+  - **Text Positioning**: Marker text uses `startOffset="50%"` on arc path for optimal centering
+  - **Arc Path**: Text follows curved path `d="M 30,60 A 60,60 0 0,1 150,100"` with center shifted left for better alignment
+  - **Responsive Text**: Text visibility controlled by zoom level (>=10)
 - **Heatmap Layer**: Intensity visualization with color gradients
 - **Zoom-Responsive**: Elements scale appropriately with zoom level
 - **Information Hierarchy**: Clear visual hierarchy for map elements
+- **Keyboard Zoom Control**: Intercepts Cmd+Plus/Cmd+Minus shortcuts to control map zoom instead of browser zoom
 
 ### Chart Components
 - **Monthly Intensity Chart**: Data visualization for bloom trends

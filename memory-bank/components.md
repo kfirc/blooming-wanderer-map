@@ -76,11 +76,54 @@ Reusable state logic extracted into focused custom hooks:
 - **Marker Interactions**: Click handlers for report selection
 - **OpenStreetMap Tiles**: Base map layer
 
-### Map Markers (MapMarkers.tsx)
-- **Custom SVG Markers**: Triangle-shaped markers with zoom-responsive sizing
-- **Location Labels**: Curved text above markers (visible at zoom >= 10) with white stroke background for readability
-- **Hover Effects**: Markers scale up 30% on hover with smooth 200ms transitions
-- **Visual Effects**: Drop shadow, opacity, and scaling animations
+### Map Components
+
+#### MapMarkers (Refactored)
+**Location**: `src/components/MapMarkers.tsx`
+- **Purpose**: Orchestrates marker display on Leaflet map
+- **Simplified Architecture**: Now uses composition of custom hooks and utilities
+- **Dependencies**: 
+  - `useMapMarkers` hook for marker management
+  - `useZoomHandlers` hook for zoom event handling
+- **Props**: map, locations, selectedLocation, onLocationClick, mapLoaded
+- **Render**: Returns null (purely functional component)
+
+#### MarkerIcon Component
+**Location**: `src/components/MarkerIcon.tsx`
+- **Purpose**: Creates Leaflet DivIcon with custom SVG content
+- **Functions**:
+  - `createMarkerIcon()` - Main icon creation function
+  - `createTextSVG()` - Generates curved text labels
+  - `createTriangleSVG()` - Generates triangle markers with shadows
+- **Features**: Intensity-based coloring, hover states, zoom-responsive text
+
+#### Custom Hooks
+
+##### useMapMarkers
+**Location**: `src/hooks/useMapMarkers.ts`
+- **Purpose**: Manages marker lifecycle and state
+- **Returns**: updateMarkerIcons, initializeMarkers, currentZoom, hoveredMarkerId
+- **Features**: Marker creation, event handling, cleanup
+
+##### useMarkerScaling  
+**Location**: `src/hooks/useMarkerScaling.ts`
+- **Purpose**: Handles marker size calculations
+- **Configuration**: baseSize, minSize, maxSize, scaleFactor, hoverScaleFactor
+- **Returns**: calculateMarkerSize function
+
+##### useZoomHandlers
+**Location**: `src/hooks/useZoomHandlers.ts`
+- **Purpose**: Manages zoom event listeners and throttling
+- **Features**: Anti-jump logic, smooth transitions, event cleanup
+
+#### Utilities
+
+##### markerUtils
+**Location**: `src/utils/markerUtils.ts`
+- **Functions**:
+  - `calculateCurrentMonthIntensity()` - Gets location intensity
+  - `getIntensityColor()` - Converts intensity to RGB color
+  - `createPopupContent()` - Generates popup HTML
 
 ## Loading Experience
 
