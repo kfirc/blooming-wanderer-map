@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 
 export interface UseFiltersProps {
   initialOrderBy?: 'date' | 'likes';
@@ -35,14 +35,23 @@ export interface UseFiltersReturn {
 export const useFilters = ({
   initialOrderBy = 'date',
   initialFilterFlower = '__all__',
-  initialSelectedFlowers = [],
+  initialSelectedFlowers,
   initialDateFilter = 'all',
   allFlowerIds = [],
 }: UseFiltersProps = {}): UseFiltersReturn => {
   const [orderBy, setOrderBy] = useState<'date' | 'likes'>(initialOrderBy);
   const [filterFlower, setFilterFlower] = useState<string>(initialFilterFlower);
-  const [selectedFlowers, setSelectedFlowers] = useState<string[]>(initialSelectedFlowers);
+  const [selectedFlowers, setSelectedFlowers] = useState<string[]>(
+    initialSelectedFlowers || allFlowerIds
+  );
   const [dateFilter, setDateFilter] = useState<string>(initialDateFilter);
+
+  // Update selectedFlowers when allFlowerIds changes and selectedFlowers is empty
+  useEffect(() => {
+    if (allFlowerIds.length > 0 && selectedFlowers.length === 0) {
+      setSelectedFlowers(allFlowerIds);
+    }
+  }, [allFlowerIds, selectedFlowers.length]);
 
   // Convert UI orderBy to database field
   const orderByField = useMemo(() => 

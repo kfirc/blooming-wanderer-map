@@ -89,13 +89,25 @@ const Sidebar: React.FC<SidebarProps> = ({
     bloomReportsService.getFlowers().then(setAllFlowers);
   }, []);
 
-  // When flowersPerLocation changes, reset selectedFlowers to all
+  // Complete reset when sidebar is closed
   useEffect(() => {
-    if (flowersPerLocation && flowersPerLocation.length > 0) {
-      const newFlowerIds = flowersPerLocation.map(f => f.flower.id);
-      filters.resetToDefaults(newFlowerIds);
+    if (!isOpen) {
+      // Complete reset after sidebar close animation completes
+      const timeoutId = setTimeout(() => {
+        // Clear all filters
+        filters.clearFilters();
+        
+        // Reset reports data by refreshing both hooks
+        allReportsData.refresh();
+        locationReportsData.refresh();
+        
+        // Clear local state
+        setAllFlowers([]);
+      }, 300); // Match the sidebar animation duration
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [flowersPerLocation, filters]);
+  }, [isOpen, filters.clearFilters, allReportsData.refresh, locationReportsData.refresh]);
 
   // Choose the appropriate reports data based on selected location
   const currentReportsData = selectedLocation ? locationReportsData : allReportsData;
