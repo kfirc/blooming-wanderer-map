@@ -124,18 +124,24 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
         </>
       )}
       {/* Filters: Now below the flower list */}
-      <div className="flex flex-row items-center gap-3 mb-4 pt-4 pb-2 justify-end" dir="rtl">
-        {/* Clear Filters Button on the left (visually) */}
-        {filtersActive && (
+      <div className="flex flex-row items-center justify-between mb-4 pt-4 pb-2">
+        {/* Clear Filters Button on the left */}
+        {filtersActive ? (
           <button onClick={handleClearSelection} className="px-3 py-2 rounded-full bg-purple-100 text-purple-700 text-sm h-12">נקה</button>
+        ) : (
+          <div></div>
         )}
-        {/* Filters */}
-        <div className="flex flex-row items-center gap-1">
+        {/* Filters on the right */}
+        <div className="flex flex-row items-center gap-1" dir="rtl">
           <div className="w-24">
-            <LocationOrderSelect value={orderBy} onChange={onOrderByChange} selectClassName="border rounded px-2 py-1 text-sm w-24" />
+            <LocationOrderSelect 
+              value={orderBy} 
+              onChange={onOrderByChange} 
+              selectClassName={`rounded px-2 py-1 text-sm w-24 ${orderBy !== 'date' ? 'border-0 bg-purple-50 focus:ring-0 focus:outline-none' : 'border border-input'}`} 
+            />
           </div>
           <Select value={dateFilter} onValueChange={onDateFilterChange}>
-            <SelectTrigger className="border rounded px-2 py-1 text-sm w-24">
+            <SelectTrigger className={`rounded px-2 py-1 text-sm w-24 ${dateFilter !== 'all' ? 'border-0 bg-purple-50 focus:ring-0 focus:outline-none' : 'border border-input'}`}>
               <SelectValue placeholder="תמיד" />
             </SelectTrigger>
             <SelectContent>
@@ -145,13 +151,18 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
             </SelectContent>
           </Select>
           {sidebarMode !== 'location' && (
-            <LocationFlowerFilter value={filterFlower} onChange={onFilterFlowerChange} options={flowerOptions} className="w-24" />
+            <LocationFlowerFilter 
+              value={filterFlower} 
+              onChange={onFilterFlowerChange} 
+              options={flowerOptions} 
+              className={`rounded px-2 py-1 text-sm w-24 ${filterFlower !== '__all__' ? 'border-0 bg-purple-50 focus:ring-0 focus:outline-none' : 'border border-input'}`} 
+            />
           )}
         </div>
       </div>
       {/* Reports List */}
       {reports.length === 0 && !loadingMore ? (
-        <div className="text-center text-gray-500 py-8">לא נמצאו דיווחים</div>
+        <div className="text-center py-4 text-gray-500 text-sm">לא נמצאו דיווחים</div>
       ) : (
         <div className="reports-container space-y-4">
           {reports.map((report, idx) => (

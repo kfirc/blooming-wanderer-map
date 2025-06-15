@@ -220,13 +220,21 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName, flo
 
   // Handle selection logic
   const handleFlowerClick = (flowerId: string) => {
+    const allFlowerIds = flowersPerLocation.map(f => f.flower.id);
+    const allSelected = allFlowerIds.length === selectedFlowers.length && 
+                       allFlowerIds.every(id => selectedFlowers.includes(id));
+    
     let newSelected: string[];
-    if (selectedFlowers.includes(flowerId)) {
+    
+    if (allSelected) {
+      // If all flowers are selected, clicking any flower selects only that flower
+      newSelected = [flowerId];
+    } else if (selectedFlowers.includes(flowerId)) {
       // Deselect
       newSelected = selectedFlowers.filter(id => id !== flowerId);
       // If all are deselected, revert to all selected
       if (newSelected.length === 0) {
-        newSelected = flowersPerLocation.map(f => f.flower.id);
+        newSelected = allFlowerIds;
       }
     } else {
       // Select
