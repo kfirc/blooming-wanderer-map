@@ -8,7 +8,7 @@ interface SidebarHeaderProps {
 
 export const SidebarHeader: React.FC<SidebarHeaderProps> = ({ 
   selectedLocation, 
-  title = 'דיווחי פריחה' 
+  title = 'כל הדיווחים' 
 }) => {
   const handleWazeNavigation = () => {
     if (!selectedLocation) return;

@@ -84,10 +84,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     pageSize: 5,
   });
 
-  // Load flowers on mount
+  // Load flowers when sidebar opens or on mount
   useEffect(() => {
-    bloomReportsService.getFlowers().then(setAllFlowers);
-  }, []);
+    if (isOpen) {
+      bloomReportsService.getFlowers().then(setAllFlowers);
+    }
+  }, [isOpen]);
 
   // Complete reset when sidebar is closed
   useEffect(() => {

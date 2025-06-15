@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Heart } from 'lucide-react';
 import { BloomReport, FlowerPerLocation, Flower } from '../types/BloomReport';
 import FlowersList from './FlowersList';
@@ -8,6 +8,7 @@ import ImageGallery from './ImageGallery';
 import { Badge } from './ui/badge';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { useDateFormatter } from '../hooks/useDateFormatter';
+import './ReportsSection.css';
 
 interface ReportsSectionProps {
   flowersPerLocation: FlowerPerLocation[];
@@ -67,6 +68,25 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
   onClearFilters,
 }) => {
   const { formatDate } = useDateFormatter();
+  const [visibleReports, setVisibleReports] = useState<Set<string>>(new Set());
+
+  // Animate reports as they appear
+  useEffect(() => {
+    if (reports.length === 0) {
+      setVisibleReports(new Set());
+      return;
+    }
+
+    // Clear visible reports when reports change (new filter/location)
+    setVisibleReports(new Set());
+
+    // Stagger the animation of each report
+    reports.forEach((report, index) => {
+      setTimeout(() => {
+        setVisibleReports(prev => new Set([...prev, report.id]));
+      }, index * 100); // 100ms delay between each report
+    });
+  }, [reports]);
 
   // Compute all flower IDs
   const allFlowerIds = flowersPerLocation.map(f => f.flower.id);
@@ -133,9 +153,18 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
       {reports.length === 0 && !loadingMore ? (
         <div className="text-center text-gray-500 py-8">לא נמצאו דיווחים</div>
       ) : (
-        <div className="space-y-4">
+        <div className="reports-container space-y-4">
           {reports.map((report, idx) => (
-            <div key={report.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow text-right" dir="rtl">
+            <div 
+              key={report.id} 
+              className={`report-item bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all duration-300 text-right ${
+                visibleReports.has(report.id) ? 'report-visible' : 'report-hidden'
+              }`}
+              dir="rtl"
+              style={{
+                transitionDelay: `${idx * 50}ms` // Additional stagger for hover effects
+              }}
+            >
               {/* Header */}
               <div className="p-4 pb-3">
                 <div className="flex items-center space-x-3 mb-3">
@@ -188,7 +217,7 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
         </div>
       )}
       {loadingMore && reports.length > 0 && (
-        <div className="text-center py-4 text-gray-500">
+        <div className="text-center py-4 text-gray-500 loading-more">
           טוען עוד דיווחים...
         </div>
       )}

@@ -1,0 +1,98 @@
+/* Report Animation Styles */
+.report-item {
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.report-item.report-visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.report-item.report-hidden {
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+/* Enhanced hover effects */
+.report-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.report-item.report-visible:hover {
+  transform: translateY(-2px);
+}
+
+/* Smooth loading animation for new reports */
+@keyframes slideInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Loading more animation */
+.loading-more {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Smooth transitions for filter changes */
+.reports-container {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Staggered animation for multiple reports */
+.report-item:nth-child(1) { animation-delay: 0ms; }
+.report-item:nth-child(2) { animation-delay: 100ms; }
+.report-item:nth-child(3) { animation-delay: 200ms; }
+.report-item:nth-child(4) { animation-delay: 300ms; }
+.report-item:nth-child(5) { animation-delay: 400ms; }
+.report-item:nth-child(6) { animation-delay: 500ms; }
+.report-item:nth-child(7) { animation-delay: 600ms; }
+.report-item:nth-child(8) { animation-delay: 700ms; }
+.report-item:nth-child(9) { animation-delay: 800ms; }
+.report-item:nth-child(10) { animation-delay: 900ms; }
+
+/* Smooth image loading */
+.report-item img {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Badge animations */
+.report-item .badge {
+  transition: all 0.2s ease-in-out;
+}
+
+.report-item:hover .badge {
+  transform: scale(1.05);
+}
+
+/* Accessibility: Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .report-item,
+  .report-item.report-visible,
+  .report-item:hover {
+    transition: none;
+    transform: none;
+    animation: none;
+  }
+  
+  .loading-more {
+    animation: none;
+  }
+} 
