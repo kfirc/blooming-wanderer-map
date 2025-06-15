@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bloomReportsService } from '../services/bloomReportsService';
-import { Flower2, Loader2, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Flower2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import SignalStrength from './SignalStrength';
 import GlowingIcon from './GlowingIcon';
 import MonthlyIntensityChart from './MonthlyIntensityChart';
 import { Flower, FlowerPerLocation } from '../types/BloomReport';
@@ -253,12 +252,7 @@ const FlowersList: React.FC<FlowersListProps> = ({ locationId, locationName, flo
   const chartMonthlyData = chartFlowerData ? generateMonthlyData(chartFlowerData.flower, chartFlowerData.intensity) : new Array(12).fill(0);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-6">
-        <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
-        <span className="ml-2 text-gray-600">טוען פרחים...</span>
-      </div>
-    );
+    return null; // Don't show anything while loading, sidebar won't open until loaded
   }
 
   if (error) {

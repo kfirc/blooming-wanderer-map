@@ -88,9 +88,6 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
     });
   }, [reports]);
 
-  // Compute all flower IDs
-  const allFlowerIds = flowersPerLocation.map(f => f.flower.id);
-
   const handleClearSelection = () => {
     onClearFilters();
   };
@@ -225,11 +222,6 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
               {/* Actions, etc. can be added here */}
             </div>
           ))}
-        </div>
-      )}
-      {loadingMore && reports.length > 0 && (
-        <div className="text-center py-4 text-gray-500 loading-more">
-          טוען עוד דיווחים...
         </div>
       )}
       {!hasMore && reports.length > 0 && (

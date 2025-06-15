@@ -43,8 +43,10 @@ const Index = () => {
     error: flowersError,
   } = useQuery<FlowerPerLocation[], unknown>({
     queryKey: ['flowers-per-location', selectedLocation?.id],
-    queryFn: () => selectedLocation ? bloomReportsService.getFlowersForLocation(selectedLocation.id) : Promise.resolve([]),
-    enabled: !!selectedLocation && sidebar.isOpen && sidebarMode === 'location',
+    queryFn: () => {
+      return selectedLocation ? bloomReportsService.getFlowersForLocation(selectedLocation.id) : Promise.resolve([]);
+    },
+    enabled: !!selectedLocation && sidebarMode === 'location',
     staleTime: 5 * 60 * 1000,
   });
 
@@ -131,6 +133,8 @@ const Index = () => {
         />
         {/* Only show MapHeader after transition is complete */}
         {!showLoadingScreen && <MapHeader onInfoClick={handleInfoClick} />}
+        
+
       </div>
       
       {/* Loading screen overlays the map during transition */}

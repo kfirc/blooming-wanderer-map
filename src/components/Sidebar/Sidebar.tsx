@@ -31,12 +31,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   sidebarMode,
   flowersPerLocation,
   flowersLoading,
-  flowersError
+  flowersError,
 }) => {
   // All flowers for ID mapping
   const [allFlowers, setAllFlowers] = useState<Flower[]>([]);
-  const [allFlowersLoading, setAllFlowersLoading] = useState(false);
-  const [shouldLoadReports, setShouldLoadReports] = useState(false);
 
   // USING CUSTOM HOOKS: Date formatter
   const { formatDate } = useDateFormatter();
@@ -65,17 +63,17 @@ const Sidebar: React.FC<SidebarProps> = ({
     [sidebarMode, selectedLocation]
   );
 
-  // USING CUSTOM HOOKS: Reports data for all reports - only load when shouldLoadReports is true
+  // USING CUSTOM HOOKS: Reports data for all reports
   const allReportsData = useReportsData({
     orderBy: filters.orderByField,
     filterFlower: filters.filterFlower,
     selectedFlowers: filters.selectedFlowerFilter,
     dateRange: filters.dateRange,
     pageSize: 5,
-    enabled: shouldLoadReports && !selectedLocation, // Only load when enabled and no specific location
+    enabled: isOpen && !selectedLocation, // Only load when sidebar is open and no specific location
   });
 
-  // USING CUSTOM HOOKS: Reports data for location-specific reports - only load when shouldLoadReports is true
+  // USING CUSTOM HOOKS: Reports data for location-specific reports
   const locationReportsData = useReportsData({
     selectedLocationId: selectedLocation?.id,
     orderBy: filters.orderByField,
@@ -83,32 +81,16 @@ const Sidebar: React.FC<SidebarProps> = ({
     selectedFlowers: filters.selectedFlowerFilter,
     dateRange: filters.dateRange,
     pageSize: 5,
-    enabled: shouldLoadReports && !!selectedLocation, // Only load when enabled and has location
+    enabled: isOpen && !!selectedLocation, // Only load when sidebar is open and has location
   });
 
-  // Load flowers when sidebar opens or on mount
+  // Load flowers when sidebar opens
   useEffect(() => {
     if (isOpen) {
-      setAllFlowersLoading(true);
-      setShouldLoadReports(false); // Reset reports loading
       bloomReportsService.getFlowers()
-        .then(setAllFlowers)
-        .finally(() => setAllFlowersLoading(false));
+        .then(setAllFlowers);
     }
   }, [isOpen]);
-
-  // Enable reports loading only after all other data has finished loading
-  useEffect(() => {
-    if (isOpen && !allFlowersLoading && !flowersLoading) {
-      // Add a small delay to ensure everything else is rendered first
-      const timer = setTimeout(() => {
-        setShouldLoadReports(true);
-      }, 100);
-      return () => clearTimeout(timer);
-    } else {
-      setShouldLoadReports(false);
-    }
-  }, [isOpen, allFlowersLoading, flowersLoading]);
 
   // Complete reset when sidebar is closed
   useEffect(() => {
@@ -124,7 +106,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         
         // Clear local state
         setAllFlowers([]);
-        setShouldLoadReports(false);
       }, 300); // Match the sidebar animation duration
 
       return () => clearTimeout(timeoutId);
@@ -188,27 +169,25 @@ const Sidebar: React.FC<SidebarProps> = ({
     <>
       <SidebarOverlay isOpen={isOpen} onClose={onToggle} />
       <SidebarToggle isOpen={isOpen} onToggle={onToggle} />
-      
       <SidebarContainer isOpen={isOpen}>
         <SidebarHeader 
           selectedLocation={selectedLocation}
-          sidebarMode={sidebarMode}
+          sidebarMode={sidebarMode} 
         />
-        
         <SidebarContent onScroll={handleScroll}>
           {sidebarMode === 'info' ? (
             <SidebarInfoMode />
           ) : (
             <ReportsSection
-              flowersPerLocation={computedSidebarMode === 'location' ? flowersPerLocation : []}
+              flowersPerLocation={flowersPerLocation}
               isLoadingFlowers={flowersLoading}
               flowersError={flowersError}
               reports={currentReportsData.reports}
               hasMore={currentReportsData.hasMore}
               loadingMore={currentReportsData.loadingMore}
-              sidebarMode={computedSidebarMode}
-              locationName={selectedLocation ? selectedLocation.name : undefined}
-              locationId={selectedLocation ? selectedLocation.id : undefined}
+              sidebarMode={selectedLocation ? 'location' : 'all'}
+              locationName={selectedLocation?.name}
+              locationId={selectedLocation?.id}
               flowerIdToName={flowerIdToName}
               allFlowers={allFlowers}
               // Filter props
