@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Map from '../components/Map';
-import Sidebar from '../components/Sidebar';
 import { BloomReport, FlowerPerLocation } from '../types/BloomReport';
 import { bloomReportsService } from '../services/bloomReportsService';
 import { Loader2 } from 'lucide-react';
 import MapHeader from '../components/MapHeader';
+import Sidebar from '../components/Sidebar';
+import { useSidebarState } from '../hooks/useSidebarState';
 
 const Index = () => {
   const [selectedLocation, setSelectedLocation] = useState<BloomReport | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarMode, setSidebarMode] = useState<'location' | 'info'>('location');
+  
+  // USING CUSTOM HOOK: Sidebar state management
+  const sidebar = useSidebarState(false);
 
   // Fetch bloom reports using React Query
   const { data: reports = [], isLoading, error } = useQuery({
@@ -27,28 +30,28 @@ const Index = () => {
   } = useQuery<FlowerPerLocation[], unknown>({
     queryKey: ['flowers-per-location', selectedLocation?.location.id],
     queryFn: () => selectedLocation ? bloomReportsService.getFlowersForLocation(selectedLocation.location.id) : Promise.resolve([]),
-    enabled: !!selectedLocation && sidebarOpen && sidebarMode === 'location',
+    enabled: !!selectedLocation && sidebar.isOpen && sidebarMode === 'location',
     staleTime: 5 * 60 * 1000,
   });
 
   const handleLocationClick = (report: BloomReport) => {
     setSelectedLocation(report);
     setSidebarMode('location');
-    setSidebarOpen(true);
+    sidebar.open();
   };
 
   // Close sidebar on Escape key
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSidebarOpen(false);
+      if (e.key === 'Escape') sidebar.close();
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
-  }, []);
+  }, [sidebar]);
 
   const handleToggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-    if (!sidebarOpen) {
+    sidebar.toggle();
+    if (!sidebar.isOpen) {
       // Don't clear selectedLocation when opening
     } else {
       // Clear selectedLocation and reset mode when closing, after animation
@@ -61,7 +64,7 @@ const Index = () => {
 
   const handleInfoClick = () => {
     setSidebarMode('info');
-    setSidebarOpen(true);
+    sidebar.open();
   };
 
   if (isLoading) {
@@ -95,7 +98,7 @@ const Index = () => {
           selectedLocation={selectedLocation}
         />
         <Sidebar 
-          isOpen={sidebarOpen}
+          isOpen={sidebar.isOpen}
           onToggle={handleToggleSidebar}
           reports={selectedLocation ? reports.filter(r => r.location.id === selectedLocation.location.id) : reports}
           selectedLocation={selectedLocation}
