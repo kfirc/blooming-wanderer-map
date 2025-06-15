@@ -49,6 +49,15 @@
 - **Floating UI**: Header and controls float over map content
 - **Marker System**: Custom SVG markers with consistent styling
 - **Interactive Elements**: Hover states and click interactions
+- **Smooth Keyboard Navigation**: Arrow key navigation with diagonal movement support
+  - **Performance-Optimized**: Uses requestAnimationFrame for 60fps smooth movement
+  - **Diagonal Movement**: Combining arrow keys (e.g., Up+Right) for diagonal navigation
+  - **Acceleration**: Diagonal movement uses normalized speed with 1.8x acceleration factor
+  - **Anti-Stuck Keys**: Handles page visibility changes and prevents stuck key states
+  - **Smooth Easing**: 0.85 smooth factor for natural movement feeling
+  - **Configurable Speed**: 280 pixels per second base pan speed (fast and responsive)
+  - **Frame-Based Duration**: Uses 1/60fps duration for consistent movement
+  - **Non-Blocking**: Doesn't interfere with zoom shortcuts (Cmd+Plus/Cmd+Minus)
 
 ## Visual Effects and Animations
 
@@ -76,6 +85,11 @@
 - **Tab Order**: Logical tab order through interactive elements
 - **Focus Management**: Proper focus handling in modals and overlays
 - **Keyboard Shortcuts**: Standard keyboard interactions supported
+- **Map Navigation**: Smooth arrow key navigation with diagonal movement
+  - **Arrow Keys**: Up, Down, Left, Right for map panning
+  - **Diagonal Movement**: Combining arrows (e.g., Up+Right) for smooth diagonal panning
+  - **Smooth Animation**: requestAnimationFrame-based movement for 60fps performance
+  - **Zoom Shortcuts**: Cmd+Plus/Cmd+Minus for zoom in/out (separate from navigation)
 
 ### Screen Reader Support
 - **Semantic HTML**: Proper HTML structure for screen readers

@@ -7,10 +7,11 @@ import MapMarkers from './map/MapMarkers';
 import MapHeatmap from './MapHeatmap';
 import MapHeader from './MapHeader';
 import MapActionButtons from './MapActionButtons';
+import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 
 interface MapProps {
   locations: Location[];
-  locationFlowersQueries: Array<{ data?: any; isLoading: boolean; error?: any }>;
+  locationFlowersQueries: Array<{ data?: unknown; isLoading: boolean; error?: unknown }>;
   onLocationClick: (location: Location) => void;
   selectedLocation: Location | null;
 }
@@ -28,6 +29,9 @@ const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocation
   const leafletMap = useRef<L.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+
+  // Enable smooth keyboard navigation with diagonal movement
+  useKeyboardNavigation({ map: leafletMap.current, mapLoaded });
 
   // Initialize map
   useEffect(() => {
@@ -63,12 +67,12 @@ const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocation
     };
   }, []);
 
-  // Add keyboard event handling for custom zoom
+  // Add keyboard event handling for custom zoom (separate from navigation)
   useEffect(() => {
     if (!leafletMap.current) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Check for Cmd+Plus or Cmd+Minus (Mac) or Ctrl+Plus/Ctrl+Minus (Windows/Linux)
+    const handleZoomKeys = (e: KeyboardEvent) => {
+      // Only handle zoom shortcuts, let useKeyboardNavigation handle arrow keys
       const isZoomKey = (e.metaKey || e.ctrlKey) && (
         e.key === '+' || e.key === '=' || // Plus key variations
         e.key === '-' || e.key === '_' || // Minus key variations
@@ -96,10 +100,10 @@ const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocation
     };
 
     // Add event listener with passive: false to allow preventDefault
-    document.addEventListener('keydown', handleKeyDown, { passive: false });
+    document.addEventListener('keydown', handleZoomKeys, { passive: false });
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keydown', handleZoomKeys);
     };
   }, [mapLoaded]);
 
