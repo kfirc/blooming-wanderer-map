@@ -53,8 +53,8 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
     
     return L.divIcon({
       html: `
-        <div class="relative flex flex-col items-center transform -translate-x-1/2 -translate-y-full">
-          <svg width="200" height="80" viewBox="0 0 200 80" style="position: absolute; top: -20px; left: 15%; transform: translateX(-50%); pointer-events: none;">
+        <div class="relative flex flex-col items-center">
+          <svg width="200" height="80" viewBox="0 0 200 80" style="position: absolute; top: -20px; left: 50%; transform: translateX(-50%); pointer-events: none;">
             <defs>
               <path id="arcPath" d="M 40,60 A 60,60 0 0,1 160,100" fill="none" />
             </defs>
@@ -73,7 +73,7 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
               </filter>
             </defs>
             <polygon 
-              points="${size/2},${size-4} ${4},${4} ${size-4},${4}"
+              points="${size/2},${size} ${4},${4} ${size-4},${4}"
               fill="${color}"
               filter="url(#shadow-${location.id})"
               opacity="0.9"
@@ -83,7 +83,7 @@ const MapMarkers: React.FC<MapMarkersProps> = ({
       `,
       className: 'custom-bloom-marker',
       iconSize: [size, size + 40],
-      iconAnchor: [size / 2, size],
+      iconAnchor: [size / 2, size + 18],
     });
   }, []);
 
