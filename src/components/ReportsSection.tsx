@@ -13,7 +13,6 @@ interface ReportsSectionProps {
   flowersPerLocation: FlowerPerLocation[];
   isLoadingFlowers: boolean;
   flowersError: unknown;
-  fetchReports: (args: { offset: number, reset: boolean, orderBy: string, filterFlower: string, selectedFlowers?: string[], fromDate?: string }) => Promise<BloomReport[]>;
   reports: BloomReport[];
   hasMore: boolean;
   loadingMore: boolean;
@@ -22,6 +21,17 @@ interface ReportsSectionProps {
   locationId?: string;
   flowerIdToName: Record<string, string>;
   allFlowers: Flower[];
+  // Filter props from parent
+  orderBy: 'date' | 'likes';
+  filterFlower: string;
+  selectedFlowers: string[];
+  dateFilter: string;
+  filtersActive: boolean;
+  onOrderByChange: (value: 'date' | 'likes') => void;
+  onFilterFlowerChange: (value: string) => void;
+  onSelectedFlowersChange: (value: string[]) => void;
+  onDateFilterChange: (value: string) => void;
+  onClearFilters: () => void;
 }
 
 const DATE_FILTERS = [
@@ -36,7 +46,6 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
   flowersPerLocation,
   isLoadingFlowers,
   flowersError,
-  fetchReports,
   reports,
   hasMore,
   loadingMore,
@@ -45,43 +54,24 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
   locationId,
   flowerIdToName,
   allFlowers,
+  // Filter props
+  orderBy,
+  filterFlower,
+  selectedFlowers,
+  dateFilter,
+  filtersActive,
+  onOrderByChange,
+  onFilterFlowerChange,
+  onSelectedFlowersChange,
+  onDateFilterChange,
+  onClearFilters,
 }) => {
-  // Filter state
-  const [orderBy, setOrderBy] = useState<'date' | 'likes'>('date');
-  const [filterFlower, setFilterFlower] = useState<string>('__all__');
-  const [selectedFlowers, setSelectedFlowers] = useState<string[]>([]);
-  const [offset, setOffset] = useState(0);
-  const [internalHasMore, setInternalHasMore] = useState(hasMore);
-  const [internalLoadingMore, setInternalLoadingMore] = useState(loadingMore);
-  const [dateFilter, setDateFilter] = useState<string>('all');
 
   // Compute all flower IDs
   const allFlowerIds = flowersPerLocation.map(f => f.flower.id);
 
-  // Reset selectedFlowers when flowersPerLocation changes
-  useEffect(() => {
-    if (flowersPerLocation && flowersPerLocation.length > 0) {
-      setSelectedFlowers(flowersPerLocation.map(f => f.flower.id));
-    }
-  }, [flowersPerLocation]);
-
-  // Determine if any filters are active (not default)
-  const filtersActive = (
-    selectedFlowers.length !== allFlowerIds.length ||
-    orderBy !== 'date' ||
-    filterFlower !== '__all__' ||
-    dateFilter !== 'all'
-  );
-
   const handleClearSelection = () => {
-    setOrderBy('date');
-    setFilterFlower('__all__');
-    setDateFilter('all');
-    if (sidebarMode === 'location') {
-      setSelectedFlowers(allFlowerIds);
-    } else {
-      setSelectedFlowers([]);
-    }
+    onClearFilters();
   };
 
   // Compute date range for filter
@@ -111,48 +101,7 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
     return from;
   };
 
-  // Fetch reports when filters change
-  useEffect(() => {
-    setOffset(0);
-    setInternalHasMore(true);
-    fetchMoreReports(0, true);
-    // eslint-disable-next-line
-  }, [orderBy, filterFlower, selectedFlowers, dateFilter]);
-
-  // In ReportsSection, map orderBy UI value to DB value before calling fetchReports
-  const orderByField = orderBy === 'date' ? 'post_date' : 'likes_count';
-
-  const fetchMoreReports = useCallback(async (startOffset = 0, reset = false) => {
-    setInternalLoadingMore(true);
-    const selectedFlowerFilter = selectedFlowers.length === allFlowerIds.length ? undefined : selectedFlowers;
-    const fromDate = getDateRange();
-    try {
-      const newReports = await fetchReports({
-        offset: startOffset,
-        reset,
-        orderBy: orderByField,
-        filterFlower: filterFlower === '__all__' ? '' : filterFlower,
-        selectedFlowers: selectedFlowerFilter,
-        fromDate: fromDate ? fromDate.toISOString() : undefined,
-      });
-      if (newReports.length < 5) {
-        setInternalHasMore(false);
-      }
-      setOffset(prev => reset ? 5 : prev + 5);
-    } catch (error) {
-      // handle error
-    } finally {
-      setInternalLoadingMore(false);
-    }
-  }, [orderByField, filterFlower, selectedFlowers, fetchReports, allFlowerIds, dateFilter]);
-
-  // Handle scroll to load more
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop <= clientHeight * 1.5 && internalHasMore && !internalLoadingMore) {
-      fetchMoreReports(offset);
-    }
-  }, [offset, internalHasMore, internalLoadingMore, fetchMoreReports]);
+  // Note: Scroll handling and data fetching is now managed by parent component
 
   // Compute flower options for filter
   const flowerOptions = React.useMemo(() => {
@@ -176,7 +125,7 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
   };
 
   return (
-    <div className="p-4 border-t border-gray-200 flex-1 flex flex-col overflow-y-auto" onScroll={handleScroll}>
+    <div className="p-4 border-t border-gray-200 flex-1 flex flex-col overflow-y-auto">
       {/* Flower List */}
       {sidebarMode === 'location' && (
         <>
@@ -187,7 +136,7 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
             isLoading={isLoadingFlowers}
             error={flowersError}
             selectedFlowers={selectedFlowers}
-            onFilterChange={setSelectedFlowers}
+            onFilterChange={onSelectedFlowersChange}
           />
           <div className="border-t border-gray-200 my-2" />
         </>
@@ -201,9 +150,9 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
         {/* Filters */}
         <div className="flex flex-row items-center gap-1">
           <div className="w-24">
-            <LocationOrderSelect value={orderBy} onChange={setOrderBy} selectClassName="border rounded px-2 py-1 text-sm w-24" />
+            <LocationOrderSelect value={orderBy} onChange={onOrderByChange} selectClassName="border rounded px-2 py-1 text-sm w-24" />
           </div>
-          <Select value={dateFilter} onValueChange={setDateFilter}>
+          <Select value={dateFilter} onValueChange={onDateFilterChange}>
             <SelectTrigger className="border rounded px-2 py-1 text-sm w-24">
               <SelectValue placeholder="תמיד" />
             </SelectTrigger>
@@ -214,7 +163,7 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
             </SelectContent>
           </Select>
           {sidebarMode !== 'location' && (
-            <LocationFlowerFilter value={filterFlower} onChange={setFilterFlower} options={flowerOptions} className="w-24" />
+            <LocationFlowerFilter value={filterFlower} onChange={onFilterFlowerChange} options={flowerOptions} className="w-24" />
           )}
         </div>
       </div>
@@ -276,12 +225,12 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
           ))}
         </div>
       )}
-      {internalLoadingMore && reports.length > 0 && (
+      {loadingMore && reports.length > 0 && (
         <div className="text-center py-4 text-gray-500">
           טוען עוד דיווחים...
         </div>
       )}
-      {!internalHasMore && reports.length > 0 && (
+      {!hasMore && reports.length > 0 && (
         <div className="text-center py-4 text-gray-500 text-sm">
           הוצגו כל הדיווחים
         </div>

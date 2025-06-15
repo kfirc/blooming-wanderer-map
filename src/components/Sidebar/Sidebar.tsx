@@ -4,6 +4,7 @@ import { bloomReportsService } from '../../services/bloomReportsService';
 import ReportsSection from '../ReportsSection';
 import { useReportsData } from '../../hooks/useReportsData';
 import { useDateFormatter } from '../../hooks/useDateFormatter';
+import { useFilters } from '../../hooks/useFilters';
 import {
   SidebarContainer,
   SidebarHeader,
@@ -34,11 +35,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   flowersLoading,
   flowersError
 }) => {
-  // Filter state - still managed locally as it affects both hooks
-  const [orderBy, setOrderBy] = useState<'date' | 'likes'>('date');
-  const [filterFlower, setFilterFlower] = useState<string>('__all__');
-  const [selectedFlowers, setSelectedFlowers] = useState<string[]>([]);
-
   // All flowers for ID mapping
   const [allFlowers, setAllFlowers] = useState<Flower[]>([]);
 
@@ -46,20 +42,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { formatDate } = useDateFormatter();
 
   // Memoize computed values
-  const orderByField = useMemo(() => 
-    orderBy === 'date' ? 'post_date' : 'likes_count', 
-    [orderBy]
-  );
-
   const allFlowerIds = useMemo(() => 
     flowersPerLocation.map(f => f.flower.id), 
     [flowersPerLocation]
   );
 
-  const selectedFlowerFilter = useMemo(() => 
-    selectedFlowers.length === allFlowerIds.length ? undefined : selectedFlowers,
-    [selectedFlowers, allFlowerIds]
-  );
+  // USING CUSTOM HOOKS: Filter management
+  const filters = useFilters({
+    allFlowerIds,
+  });
 
   const flowerIdToName = useMemo(() => 
     allFlowers.reduce((acc, flower) => {
@@ -76,18 +67,20 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // USING CUSTOM HOOKS: Reports data for all reports
   const allReportsData = useReportsData({
-    orderBy: orderByField,
-    filterFlower,
-    selectedFlowers: selectedFlowerFilter,
+    orderBy: filters.orderByField,
+    filterFlower: filters.filterFlower,
+    selectedFlowers: filters.selectedFlowerFilter,
+    dateRange: filters.dateRange,
     pageSize: 5,
   });
 
   // USING CUSTOM HOOKS: Reports data for location-specific reports
   const locationReportsData = useReportsData({
     selectedLocationId: selectedLocation?.location.id,
-    orderBy: orderByField,
-    filterFlower,
-    selectedFlowers: selectedFlowerFilter,
+    orderBy: filters.orderByField,
+    filterFlower: filters.filterFlower,
+    selectedFlowers: filters.selectedFlowerFilter,
+    dateRange: filters.dateRange,
     pageSize: 5,
   });
 
@@ -99,9 +92,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   // When flowersPerLocation changes, reset selectedFlowers to all
   useEffect(() => {
     if (flowersPerLocation && flowersPerLocation.length > 0) {
-      setSelectedFlowers(flowersPerLocation.map(f => f.flower.id));
+      const newFlowerIds = flowersPerLocation.map(f => f.flower.id);
+      filters.resetToDefaults(newFlowerIds);
     }
-  }, [flowersPerLocation]);
+  }, [flowersPerLocation, filters]);
 
   // Choose the appropriate reports data based on selected location
   const currentReportsData = selectedLocation ? locationReportsData : allReportsData;
@@ -174,7 +168,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               flowersPerLocation={computedSidebarMode === 'location' ? flowersPerLocation : []}
               isLoadingFlowers={flowersLoading}
               flowersError={flowersError}
-              fetchReports={reportsFetcher}
               reports={currentReportsData.reports}
               hasMore={currentReportsData.hasMore}
               loadingMore={currentReportsData.loadingMore}
@@ -183,6 +176,17 @@ const Sidebar: React.FC<SidebarProps> = ({
               locationId={selectedLocation ? selectedLocation.location.id : undefined}
               flowerIdToName={flowerIdToName}
               allFlowers={allFlowers}
+              // Filter props
+              orderBy={filters.orderBy}
+              filterFlower={filters.filterFlower}
+              selectedFlowers={filters.selectedFlowers}
+              dateFilter={filters.dateFilter}
+              filtersActive={filters.filtersActive}
+              onOrderByChange={filters.setOrderBy}
+              onFilterFlowerChange={filters.setFilterFlower}
+              onSelectedFlowersChange={filters.setSelectedFlowers}
+              onDateFilterChange={filters.setDateFilter}
+              onClearFilters={filters.clearFilters}
             />
           )}
         </SidebarContent>

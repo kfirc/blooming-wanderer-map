@@ -7,6 +7,7 @@ export interface UseReportsDataProps {
   orderBy: 'post_date' | 'likes_count';
   filterFlower: string;
   selectedFlowers?: string[];
+  dateRange?: Date | null;
   pageSize?: number;
 }
 
@@ -24,6 +25,7 @@ export const useReportsData = ({
   orderBy,
   filterFlower,
   selectedFlowers,
+  dateRange,
   pageSize = 5,
 }: UseReportsDataProps): UseReportsDataReturn => {
   const [reports, setReports] = useState<BloomReport[]>([]);
@@ -44,14 +46,16 @@ export const useReportsData = ({
             pageSize,
             orderBy,
             filterFlower === '__all__' ? '' : filterFlower,
-            selectedFlowers
+            selectedFlowers,
+            dateRange ? dateRange.toISOString() : undefined
           )
         : await bloomReportsService.getReportsWithPagination(
             startOffset,
             pageSize,
             orderBy,
             filterFlower === '__all__' ? '' : filterFlower,
-            selectedFlowers
+            selectedFlowers,
+            dateRange ? dateRange.toISOString() : undefined
           );
 
       if (newReports.length < pageSize) {
@@ -71,19 +75,19 @@ export const useReportsData = ({
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
     await fetchReports(offset);
-  }, [offset, loadingMore, hasMore, selectedLocationId, orderBy, filterFlower, selectedFlowers]);
+  }, [offset, loadingMore, hasMore, selectedLocationId, orderBy, filterFlower, selectedFlowers, dateRange]);
 
   const refresh = useCallback(async () => {
     setReports([]);
     setOffset(0);
     setHasMore(true);
     await fetchReports(0, true);
-  }, [selectedLocationId, orderBy, filterFlower, selectedFlowers]);
+  }, [selectedLocationId, orderBy, filterFlower, selectedFlowers, dateRange]);
 
   // Reset and fetch when dependencies change
   useEffect(() => {
     refresh();
-  }, [selectedLocationId, orderBy, filterFlower, selectedFlowers]);
+  }, [selectedLocationId, orderBy, filterFlower, selectedFlowers, dateRange]);
 
   return {
     reports,

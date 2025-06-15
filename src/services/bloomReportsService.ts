@@ -50,7 +50,8 @@ export const bloomReportsService = {
     limit: number,
     orderBy: 'post_date' | 'likes_count' = 'post_date',
     filterFlower: string = '',
-    selectedFlowers?: string[]
+    selectedFlowers?: string[],
+    fromDate?: string
   ): Promise<BloomReport[]> {
     let query = supabase
       .from('bloom_reports')
@@ -69,6 +70,9 @@ export const bloomReportsService = {
     if (selectedFlowers && selectedFlowers.length > 0) {
       // TODO: Remove flower_types after migration
       query = query.contains('flower_ids', selectedFlowers);
+    }
+    if (fromDate) {
+      query = query.gte('post_date', fromDate);
     }
 
     const { data, error } = await query;
