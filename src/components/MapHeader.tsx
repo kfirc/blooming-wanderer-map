@@ -30,7 +30,32 @@ const MapHeader: React.FC<MapHeaderProps> = ({ onInfoClick }) => {
     <div className="absolute top-4 left-4 z-30 flex items-center space-x-3">
       {/* Logo and Title */}
       <div className="flex items-center space-x-2 bg-white/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
-        <img src="/title.jpg" alt="Bloom Israel" className="h-10 w-10 rounded-full object-cover" />
+        <div className="header-logo-container relative group cursor-pointer">
+          <img src="/title.jpg" alt="Bloom Israel" className="h-10 w-10 rounded-full object-cover" />
+          <svg 
+            className="header-logo-circle absolute -top-1 -left-1 w-12 h-12 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" 
+            viewBox="0 0 48 48"
+          >
+            <circle
+              cx="24"
+              cy="24"
+              r="22"
+              fill="none"
+              stroke="url(#headerProgressGradient)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeDasharray="138 0"
+              transform="rotate(-90 24 24)"
+            />
+            <defs>
+              <linearGradient id="headerProgressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#16a34a" />
+                <stop offset="50%" stopColor="#7c3aed" />
+                <stop offset="100%" stopColor="#16a34a" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
         <div className="flex flex-col">
           <span className="text-lg font-bold bg-gradient-to-r from-green-700 to-purple-700 bg-clip-text text-transparent leading-tight flex items-end gap-1">
             Bloom <span className="text-xs align-baseline">IL</span>

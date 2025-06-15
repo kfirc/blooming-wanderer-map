@@ -3,14 +3,18 @@ import { useQuery } from '@tanstack/react-query';
 import Map from '../components/Map';
 import { BloomReport, FlowerPerLocation } from '../types/BloomReport';
 import { bloomReportsService } from '../services/bloomReportsService';
-import { Loader2 } from 'lucide-react';
 import MapHeader from '../components/MapHeader';
 import Sidebar from '../components/Sidebar';
+import LoadingScreen from '../components/LoadingScreen';
 import { useSidebarState } from '../hooks/useSidebarState';
 
 const Index = () => {
   const [selectedLocation, setSelectedLocation] = useState<BloomReport | null>(null);
   const [sidebarMode, setSidebarMode] = useState<'location' | 'info'>('location');
+  const [loadingComplete, setLoadingComplete] = useState(false);
+  const [showLoadingScreen, setShowLoadingScreen] = useState(true);
+  const [startTransition, setStartTransition] = useState(false);
+  const [transitionComplete, setTransitionComplete] = useState(false);
   
   // USING CUSTOM HOOK: Sidebar state management
   const sidebar = useSidebarState(false);
@@ -33,6 +37,30 @@ const Index = () => {
     enabled: !!selectedLocation && sidebar.isOpen && sidebarMode === 'location',
     staleTime: 5 * 60 * 1000,
   });
+
+  // Handle loading screen animation sequence
+  useEffect(() => {
+    if (!isLoading && reports.length > 0) {
+      // Start the snake animation immediately when loading completes
+      setLoadingComplete(true);
+      
+      // Start the spectacular transition after the circle animation completes + small delay
+      const transitionTimer = setTimeout(() => {
+        setStartTransition(true);
+      }, 2600); // 2s for snake-then-stretch animation + 600ms pause to appreciate the completed circle
+      
+      // Complete the transition and hide loading screen - wait for full transition
+      const hideTimer = setTimeout(() => {
+        setTransitionComplete(true);
+        setShowLoadingScreen(false);
+      }, 4300); // 2s circle + 600ms pause + 1.7s transition (max of 1.5s collapse and 1.3s logo move + buffer)
+      
+      return () => {
+        clearTimeout(transitionTimer);
+        clearTimeout(hideTimer);
+      };
+    }
+  }, [isLoading, reports.length]);
 
   const handleLocationClick = (report: BloomReport) => {
     setSelectedLocation(report);
@@ -67,25 +95,9 @@ const Index = () => {
     sidebar.open();
   };
 
-  if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-purple-50">
-        <div className="flex items-center space-x-2 text-gray-600">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>טוען דיווחי פריחה...</span>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-purple-50">
-        <div className="text-center text-gray-600">
-          <p className="mb-2">שגיאה בטעינת הדיווחים</p>
-          <p className="text-sm">אנא נסה לרענן את הדף</p>
-        </div>
-      </div>
+      <LoadingScreen message="שגיאה בטעינת הדיווחים - אנא נסה לרענן את הדף" />
     );
   }
 
@@ -107,8 +119,17 @@ const Index = () => {
           flowersLoading={flowersLoading}
           flowersError={flowersError}
         />
-        <MapHeader onInfoClick={handleInfoClick} />
+        {/* Only show MapHeader after transition is complete */}
+        {!showLoadingScreen && <MapHeader onInfoClick={handleInfoClick} />}
       </div>
+      
+      {/* Loading screen overlays the map during transition */}
+      {showLoadingScreen && (
+        <LoadingScreen 
+          loadingComplete={loadingComplete} 
+          startTransition={startTransition} 
+        />
+      )}
     </div>
   );
 };

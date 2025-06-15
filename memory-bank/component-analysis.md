@@ -266,6 +266,7 @@ The Sidebar refactoring follows proven React patterns and best practices. The on
 - **Complete Reset**: ✅ All sidebar data resets when closed (filters, reports, local state)
 - **Smooth Loading**: ✅ Reports animate in with staggered fade-in effects
 - **Flower Filter Options**: ✅ Fixed - flowers reload when sidebar reopens
+- **Cool Loading Screen**: ✅ Animated circular logo with gradient border and title
 - **Status**: ✅ Fully functional, no duplicate state management
 
 ## Custom Hooks Status
@@ -273,6 +274,35 @@ The Sidebar refactoring follows proven React patterns and best practices. The on
 - `useReportsData`: ✅ Data fetching with date filtering
 - `useDateFormatter`: ✅ Consistent date formatting across components
 - `useSidebarState`: ✅ Sidebar state management
+
+## Loading Screen System (June 2025)
+
+### Cool Loading Animation Features
+- **Circular Logo**: Large circular image using `/title.jpg` (120px on desktop, 100px mobile)
+- **Animated Border**: Rotating conic gradient border (green to purple) around logo
+- **Title Display**: "Bloom IL" with gradient text matching MapHeader styling
+- **Loading Message**: Customizable message with fade-in animation
+- **Animated Dots**: Three bouncing dots with staggered timing
+- **Responsive Design**: Adapts to mobile screens
+- **Accessibility**: Respects `prefers-reduced-motion` setting
+
+### Animation Details
+- **Border Rotation**: 2-second linear infinite rotation with partial arc (60-degree span)
+- **Arc Design**: Partial circular line from 240deg to 300deg (not full circle)
+- **Loading Completion**: Transitions to full circle border when loading completes
+- **Completion Timing**: 0.8s ease-in-out transition with 3s rotation speed
+- **Logo Visibility**: Image shows through with proper z-index stacking
+- **Title Gradient**: 4-second gradient shift animation across text
+- **Dots Bounce**: 1.4-second staggered bounce animation
+- **Message Fade**: 1-second fade-in-up animation with 0.5s delay
+- **Colors**: Green (#16a34a) to Purple (#7c3aed) gradient theme
+
+### Implementation
+- **Component**: `src/components/LoadingScreen.tsx`
+- **Styles**: `src/components/LoadingScreen.css`
+- **Usage**: Replaces old Loader2 spinner in Index.tsx
+- **Props**: Optional `message` prop for custom loading text
+- **Error Handling**: Also used for error states with custom message
 
 ## Sidebar Behavior (June 2025)
 
@@ -331,12 +361,14 @@ The Sidebar refactoring follows proven React patterns and best practices. The on
 - **React Hook Imports**: Cleaned up unused imports from ReportsSection
 - **getDateRange Function**: Removed unused local function from ReportsSection
 - **Duplicate Files**: Cleaned up SidebarRefactored.tsx and SidebarFixed.tsx
+- **Loader2 Import**: Replaced with custom LoadingScreen component
 
 ### Animation System (June 2025)
 - **Report Loading**: Smooth fade-in animations with staggered delays
 - **CSS File**: `src/components/ReportsSection.css` with animation styles
 - **Performance**: Optimized with `cubic-bezier` easing and proper transitions
 - **Hover Effects**: Enhanced visual feedback on report items
+- **Loading Screen**: Professional circular logo animation with gradient borders
 
 ## Bug Fixes Timeline
 1. **Filter Reset Bug**: Fixed filters being reset when switching locations
@@ -344,12 +376,21 @@ The Sidebar refactoring follows proven React patterns and best practices. The on
 3. **Auto-Clear Bug**: Fixed filters not clearing when sidebar closes
 4. **Flower Filter Bug**: Fixed empty flower dropdown after sidebar reopen
 5. **Animation Implementation**: Added smooth loading animations for reports
+6. **Loading Screen Upgrade**: Replaced basic spinner with animated logo design
+7. **Partial Arc Animation**: Fixed logo visibility with partial rotating arc instead of full border
+8. **IL Text Styling**: Updated loading screen "IL" text to match MapHeader styling exactly
+9. **IL Text Positioning**: Made "IL" text bigger (1rem) and positioned lower using vertical-align: sub and top: 0.3em
+10. **Title Spacing**: Moved title closer to logo with margin-top: 0.5rem and reduced gap to 0.1rem
+11. **Loading Completion Animation**: Added transition from partial arc to full circle when loading completes
+12. **Extended Demo Timing**: Increased delay to 4 seconds to properly showcase the partial-to-full circle transition
+13. **Loading Animation Fix**: Fixed loading screen logic to properly show the animation sequence (2s partial arc + 2s full circle)
 
 ## Current Status
 - **Confidence Level**: 95%
 - **Known Issues**: None
 - **Performance**: Optimized with proper memoization and animation
-- **User Experience**: Smooth, responsive, and intuitive filter system
+- **User Experience**: Smooth, responsive, and intuitive filter system with professional loading
+- **Visual Design**: Consistent branding with animated logo and gradient themes
 
 ## Component Responsibilities
 
