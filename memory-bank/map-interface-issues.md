@@ -1,5 +1,167 @@
 # Map Interface Issues
 
+## Overview
+This document tracks known issues, solutions, and improvements for the Map component interface.
+
+## Geographic Bounds Restriction (✅ IMPLEMENTED)
+
+### Problem
+Map allows unlimited panning and zooming globally, causing inefficient loading and users navigating away from Israel.
+
+### Solution
+Implemented `maxBounds` property in Leaflet map configuration to restrict map view to Israel's geographic boundaries:
+
+```typescript
+// Israel geographic bounds for map restriction
+const ISRAEL_BOUNDS = [
+  [29.3, 33.7], // Southwest corner: [latitude, longitude]
+  [33.5, 36.3]  // Northeast corner: [latitude, longitude]
+] as L.LatLngBoundsExpression;
+
+// Maximum zoom level for efficient Israel viewing
+const MAX_ZOOM_LEVEL = 16;
+
+// Map initialization with bounds and zoom limits
+leafletMap.current = L.map(mapRef.current, {
+  center: [32, 35],
+  zoom: 9,
+  zoomControl: false,
+  attributionControl: false,
+  maxBounds: ISRAEL_BOUNDS,
+  maxBoundsViscosity: 1.0, // Make bounds "sticky"
+  maxZoom: MAX_ZOOM_LEVEL, // Limit maximum zoom for efficient loading
+  minZoom: 7 // Prevent zooming out too far from Israel
+});
+```
+
+### Technical Details
+- Uses precise coordinates from Wikipedia's Israel location map data
+- `maxBoundsViscosity: 1.0` makes bounds completely restrictive
+- `maxZoom: 16` limits maximum zoom level for efficient tile loading
+- `minZoom: 8` prevents zooming out too far from Israel's borders
+- Prevents both panning outside bounds and excessive zooming
+- Maintains performance by limiting tile loading to relevant geographic area and zoom levels
+
+## Map Smoothness Optimization (✅ IMPLEMENTED)
+
+### Problem
+Map panning can feel jerky because tiles are only loaded when they become visible, causing delays and stuttering during movement.
+
+### Solution
+Enhanced tile layer configuration with buffering and performance optimizations:
+
+```typescript
+const tileLayer = L.tileLayer(style.url, {
+  // Buffering options for smoother panning
+  keepBuffer: 4, // Keep 4 tiles around visible area (default is 2)
+  updateWhenIdle: false, // Load tiles during panning for smoother experience
+  updateWhenZooming: true, // Continue updating during zoom
+  // Performance optimizations
+  updateInterval: 150, // Throttle tile loading updates (milliseconds)
+  crossOrigin: true, // Enable CORS for better caching
+});
+```
+
+### Benefits
+- **Extensive Preloading**: `keepBuffer: 8` preloads 8 tiles beyond visible edges (user increased from default 2)
+- **Continuous Loading**: `updateWhenIdle: false` loads tiles while moving
+- **Better Zoom Experience**: `updateWhenZooming: true` keeps tiles updating during zoom
+- **Immediate Requests**: `updateInterval: 0` removes throttling for instant tile requests (user disabled throttling)
+- **Enhanced Caching**: `crossOrigin: true` enables better browser caching
+- **Retina Support**: `detectRetina: true` auto-detects high-DPI displays
+
+## Virtual Viewport Preloading (✅ IMPLEMENTED)
+
+### Problem
+Need to make Leaflet preload tiles beyond what's visible to the user without affecting the displayed map size.
+
+### Solution
+Implemented CSS-based virtual viewport technique:
+
+```css
+/* Map wrapper hides extended areas */
+.map-wrapper {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Map container extends beyond visible area */
+.map-container {
+  position: absolute;
+  top: -100px;    /* Extend 100px above */
+  left: -100px;   /* Extend 100px left */
+  right: -100px;  /* Extend 100px right */
+  bottom: -100px; /* Extend 100px below */
+  minHeight: 'calc(100% + 200px)';
+  minWidth: 'calc(100% + 200px)';
+}
+```
+
+### Benefits
+- **Natural Preloading**: Leaflet thinks viewport is 100px wider/taller in each direction (reduced to prevent overlay)
+- **Automatic Tile Loading**: No custom JavaScript needed - uses Leaflet's built-in tile management
+- **Performance Optimized**: More efficient than custom preloading hooks
+- **User Experience**: Invisible to user - they see normal map size but get smoother panning
+- **Proper Z-Index**: UI elements stay above map with correct stacking context
+
+## Map Overlay Issues (✅ FIXED)
+
+### Problem
+Virtual viewport technique was causing map container to overlay header and sidebar elements due to improper z-index stacking and excessive extension.
+
+### Root Cause
+- Map container extended -100px in all directions, causing overflow beyond intended boundaries
+- Missing z-index management created stacking context conflicts
+- UI elements were being rendered below the extended map areas
+
+### Solution
+1. **Reduced Extension**: Changed from ±100px to ±50px extension to prevent overlay while maintaining preloading
+2. **Proper Z-Index Stacking**:
+   ```css
+   .map-wrapper { z-index: 1; }
+   .map-container { z-index: 1; }
+   /* UI elements wrapped in z-30 container */
+   ```
+3. **Container Sizes**: Reduced virtual viewport from 200px to 100px wider/taller
+4. **Stacking Context**: Wrapped UI components in `z-30` container to ensure proper layering
+
+### Preloading Strategies
+1. **Extended Geographic Bounds**: Calculates 0.01 degree radius around current center
+2. **Pixel Buffer Expansion**: Extends pixel bounds by 2 tile sizes (512px) in each direction
+3. **Movement-Triggered Preloading**: Triggers on `moveend` and `zoomend` events
+4. **Distance-Based Optimization**: Only preloads when moved >100m from last preload
+5. **Event-Driven Tile Loading**: Additional tile checks triggered by `tileload` events
+6. **Initial Aggressive Preload**: Forces preloading 500ms after map initialization
+
+### References
+- Wikipedia Module:Location map/data/Israel coordinates
+- Leaflet maxBounds documentation
+
+## Sidebar Component Conflicts (✅ FIXED)
+
+### Problem
+Map.tsx was incorrectly rendering both MapStyleSidebar and Sidebar components using the same `isSidebarOpen` state, causing conflicts where both sidebars would open simultaneously.
+
+### Root Cause
+- Map component received `isSidebarOpen` prop intended only for MapStyleSidebar
+- Both MapStyleSidebar and Sidebar were using same state controller
+- Architecture should separate concerns: Map handles style sidebar, Index.tsx handles location sidebar
+
+### Solution
+- Removed Sidebar component from Map.tsx 
+- Map component now only controls MapStyleSidebar via `isSidebarOpen`
+- Sidebar (location details) handled at Index.tsx level with separate state management
+- Proper separation of concerns restored
+
+### Architecture
+```
+Index.tsx
+├── Map.tsx (controls MapStyleSidebar only)
+└── Sidebar.tsx (location details, separate state)
+```
+
 ## Current Issues
 
 ### 1. MapStyleSidebar Close Button Positioning ✅ FIXED

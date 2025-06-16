@@ -19,6 +19,18 @@ interface MapProps {
   onSidebarClose: () => void;
 }
 
+// Israel geographic bounds for map restriction
+const ISRAEL_BOUNDS = [
+  [29.3, 33.7], // Southwest corner: [latitude, longitude]
+  [33.5, 36.3]  // Northeast corner: [latitude, longitude]
+] as L.LatLngBoundsExpression;
+
+// Maximum zoom level for efficient Israel viewing
+const MAX_ZOOM_LEVEL = 16;
+
+// Minimum zoom level for efficient Israel viewing
+const MIN_ZOOM_LEVEL = 8;
+
 // Fix for default marker icons in Leaflet
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -47,12 +59,16 @@ const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocation
     
     if (!mapRef.current || leafletMap.current) return;
 
-    // Initialize Leaflet map centered on Israel (more accurate center)
+    // Initialize Leaflet map centered on Israel with geographic bounds restriction
     leafletMap.current = L.map(mapRef.current, {
       center: [32, 35], // Geographic center of Israel
       zoom: 9,
       zoomControl: false,
-      attributionControl: false
+      attributionControl: false,
+      maxBounds: ISRAEL_BOUNDS,
+      maxBoundsViscosity: 1.0, // Make bounds "sticky" - prevents dragging outside
+      maxZoom: MAX_ZOOM_LEVEL, // Limit maximum zoom for efficient loading
+      minZoom: MIN_ZOOM_LEVEL // Prevent zooming out too far from Israel
     });
 
     // Set map as loaded (tile layer will be added by useMapStyle hook)
@@ -107,7 +123,7 @@ const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocation
     return () => {
       document.removeEventListener('keydown', handleZoomKeys);
     };
-  }, [mapLoaded]);
+      }, [mapLoaded]);
 
   if (mapError) {
     return (
@@ -122,12 +138,19 @@ const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocation
 
   return (
     <div className="relative h-full w-full">
-      {/* Leaflet Map Container */}
-      <div 
-        ref={mapRef}
-        className="h-full w-full z-10"
-        style={{ minHeight: '400px' }}
-      />
+      {/* Virtual viewport wrapper - hides extended map areas */}
+      <div className="map-wrapper">
+        {/* Extended map container - larger than visible area to trigger more tile loading */}
+        <div 
+          ref={mapRef} 
+          className="map-container"
+          style={{ 
+            // Ensure Leaflet recognizes the larger container size
+            minHeight: 'calc(100% + 100px)', // Reduced from 200px
+            minWidth: 'calc(100% + 100px)'   // Reduced from 200px
+          }}
+        />
+      </div>
 
       {/* Loading indicator */}
       {!mapLoaded && (
@@ -136,7 +159,7 @@ const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocation
         </div>
       )}
 
-      {/* Map Components */}
+      {/* Map Components - positioned absolutely with proper z-index */}
       <MapHeatmap 
         map={leafletMap.current}
         locations={locations}
@@ -153,16 +176,17 @@ const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocation
         mapLoaded={mapLoaded}
       />
 
-      {/* UI Components */}
-      <MapActionButtons />
-      
-      {/* Map Style Sidebar */}
-      <MapStyleSidebar
-        isOpen={isSidebarOpen}
-        onClose={onSidebarClose}
-        currentStyle={currentStyleId}
-        onStyleChange={changeMapStyle}
-      />
+      {/* UI Components - highest z-index to stay above map */}
+      <div className="relative z-30">
+        <MapActionButtons />
+        
+        <MapStyleSidebar
+          isOpen={isSidebarOpen}
+          onClose={onSidebarClose}
+          currentStyle={currentStyleId}
+          onStyleChange={changeMapStyle}
+        />
+      </div>
     </div>
   );
 };

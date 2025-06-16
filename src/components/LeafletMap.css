@@ -2,11 +2,65 @@
 .leaflet-container {
   height: 100%;
   width: 100%;
+  font-family: inherit;
+}
+
+/* Virtual viewport technique: Make the map container think it's larger */
+.map-wrapper {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden; /* Critical: Hide the extended areas from user */
+  z-index: 1; /* Ensure proper stacking below UI elements */
+}
+
+.map-container {
+  /* Make the actual map container larger than the visible area */
+  position: absolute;
+  top: -50px;    /* Reduced from -100px to prevent overlay */
+  left: -50px;   /* Reduced from -100px to prevent overlay */
+  right: -50px;  /* Reduced from -100px to prevent overlay */
+  bottom: -50px; /* Reduced from -100px to prevent overlay */
+  
+  /* This makes Leaflet think the viewport is 100px wider and 100px taller */
+  /* It will preload tiles for these extended areas naturally */
+  z-index: 1; /* Keep map below UI elements */
+}
+
+/* Ensure smooth animations */
+.leaflet-container {
+  transition: none;
+}
+
+/* Optimize tile loading performance */
+.leaflet-tile-container {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Ensure UI elements stay above the map */
+.leaflet-control-container {
+  z-index: 1000; /* Standard Leaflet control z-index */
 }
 
 .custom-bloom-marker {
-  background: transparent !important;
-  border: none !important;
+  cursor: pointer;
+}
+
+.custom-bloom-marker img {
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.custom-bloom-marker:hover img {
+  transform: scale(1.1);
+}
+
+.custom-bloom-marker.selected img {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.4);
 }
 
 .flower-tags-container {
@@ -32,15 +86,6 @@
   white-space: nowrap;
   text-shadow: 0 1px 1px rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.3);
-}
-
-/* Ensure leaflet controls don't interfere */
-.leaflet-control-container {
-  pointer-events: none;
-}
-
-.leaflet-control {
-  pointer-events: auto;
 }
 
 /* Map tile layer transitions */

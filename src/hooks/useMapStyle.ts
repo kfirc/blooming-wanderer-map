@@ -22,11 +22,35 @@ export const useMapStyle = ({ defaultStyleId = 'osm-standard', mapInstance }: Us
       mapInstance.removeLayer(currentTileLayerRef.current);
     }
 
-    // Add new tile layer with smooth transition
+    // Add new tile layer with advanced preloading configuration
     const newTileLayer = L.tileLayer(style.url, {
       attribution: style.attribution,
       maxZoom: style.maxZoom,
       className: 'map-tile-layer',
+      // Advanced buffering options for extensive preloading
+      keepBuffer: 8, // Keep 8 tiles around visible area (user's setting)
+      updateWhenIdle: false, // Load tiles during panning for smoother experience
+      updateWhenZooming: true, // Continue updating during zoom
+      // Additional preloading optimizations
+      updateInterval: 0, // Remove throttling for immediate tile requests (user disabled this)
+      crossOrigin: true, // Enable CORS for better caching
+      // Performance and caching enhancements
+      detectRetina: true, // Auto-detect retina displays for higher quality tiles
+      // Tile loading strategies
+      zIndex: 1, // Ensure proper layering
+      opacity: 1, // Full opacity for immediate visibility
+      // Ensure tiles load even outside immediate bounds
+      bounds: undefined, // Don't restrict tile loading to specific bounds
+    });
+
+    // Add event listeners for aggressive preloading
+    newTileLayer.on('tileload', () => {
+      // Trigger additional tile loading when tiles complete
+      setTimeout(() => {
+        if (mapInstance && mapInstance.getZoom) {
+          mapInstance.fire('moveend'); // Trigger additional tile checks
+        }
+      }, 50);
     });
 
     // Add with fade-in effect
@@ -53,6 +77,30 @@ export const useMapStyle = ({ defaultStyleId = 'osm-standard', mapInstance }: Us
         attribution: currentStyle.attribution,
         maxZoom: currentStyle.maxZoom,
         className: 'map-tile-layer',
+        // Advanced buffering options for extensive preloading
+        keepBuffer: 8, // Keep 8 tiles around visible area (user's setting)
+        updateWhenIdle: false, // Load tiles during panning for smoother experience
+        updateWhenZooming: true, // Continue updating during zoom
+        // Additional preloading optimizations
+        updateInterval: 0, // Remove throttling for immediate tile requests (user disabled this)
+        crossOrigin: true, // Enable CORS for better caching
+        // Performance and caching enhancements
+        detectRetina: true, // Auto-detect retina displays for higher quality tiles
+        // Tile loading strategies
+        zIndex: 1, // Ensure proper layering
+        opacity: 1, // Full opacity for immediate visibility
+        // Ensure tiles load even outside immediate bounds
+        bounds: undefined, // Don't restrict tile loading to specific bounds
+      });
+
+      // Add event listeners for aggressive preloading
+      initialTileLayer.on('tileload', () => {
+        // Trigger additional tile loading when tiles complete
+        setTimeout(() => {
+          if (mapInstance && mapInstance.getZoom) {
+            mapInstance.fire('moveend'); // Trigger additional tile checks
+          }
+        }, 50);
       });
       
       initialTileLayer.addTo(mapInstance);
