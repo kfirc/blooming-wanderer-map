@@ -202,3 +202,161 @@ All reported issues have been systematically resolved with a focus on **UI consi
 5. ✅ **Unified Headers**: All sidebars use consistent right-aligned headers with custom content support
 
 The interface now provides a **cohesive, intuitive experience** across all sliding panels with research-backed UX improvements. 
+
+## Minor UI Adjustments ✅ COMPLETED
+
+### Information Icon Spacing
+**Change**: Added `ml-1` (left margin) to the information icon button in MapHeader
+**Purpose**: Improved spacing between map style button and information icon
+**Location**: `src/components/MapHeader.tsx` - info button className
+**Result**: Better visual separation and alignment in header button group
+
+### Panel Width Consistency
+**Problem**: MapStyleSidebar used fixed width `w-96` while reports sidebar used responsive `w-full md:w-96`
+**Solution**: Updated MapStyleSidebar to use `width="w-full md:w-96"` for consistency
+**Result**: Both sidepanels now have identical responsive width behavior:
+- **Mobile**: Full width (`w-full`)
+- **Desktop**: Fixed 24rem width (`md:w-96`)
+**Impact**: Consistent user experience across all slide panels 
+
+### 6. Responsive Close Button Positioning ✅ FIXED
+**Problem**: User noticed inconsistency between MapStyle sidebar and Reports sidebar close button behavior. MapStyle sidebar close button only appeared when using outside positioning, while reports sidebar was recently updated to responsive positioning.
+
+**Root Cause**: 
+- **MapStyleSidebar**: Still using `closeButtonPosition="outside"` which puts close button off-screen on mobile when panel is full width
+- **SidebarContainer (Reports)**: Already updated to use `closeButtonPosition="responsive"`
+- Different configurations led to inconsistent behavior between the two sidebars
+
+**Mobile UX Research Findings**:
+Based on 2025 mobile UX best practices research:
+- When sidepanel takes full width on mobile (`w-full`), close button should be positioned "inside" the panel header
+- Outside positioning only works when panel has fixed width and doesn't cover entire viewport
+- Users expect close functionality to be accessible when panel occupies full screen
+
+**Solution Implemented**:
+- **Enhanced SlidePanel**: Added new `'responsive'` option to `closeButtonPosition` prop
+- **Smart Positioning Logic**: 
+  - Detects if width contains `'w-full'` (mobile full width)
+  - `responsive` mode: Inside on mobile (`w-full`), outside on desktop (`md:w-96`)
+  - Shows appropriate close button based on screen size and panel width
+- **Updated MapStyleSidebar**: Changed from `closeButtonPosition="outside"` to `closeButtonPosition="responsive"`
+- **Unified Behavior**: Both sidebars now use `closeButtonPosition="responsive"` for consistent UX
+
+**Technical Implementation**:
+```tsx
+// SlidePanel enhanced logic
+const isFullWidthOnMobile = width.includes('w-full');
+const shouldUseInsidePosition = 
+  closeButtonPosition === 'inside' ||
+  (closeButtonPosition === 'responsive' && isFullWidthOnMobile);
+
+// Conditional rendering based on screen size
+{/* Outside button: hidden on mobile when full width */}
+className={isFullWidthOnMobile ? 'hidden md:flex' : 'flex'}
+
+{/* Inside button: shown on mobile when full width */} 
+className={isFullWidthOnMobile ? 'flex md:hidden' : 'flex'}
+```
+
+**Result**: 
+- ✅ **Mobile**: Close button appears inside panel header for both sidebars
+- ✅ **Desktop**: Close button appears outside panel edge for both sidebars  
+- ✅ **Consistent UX**: Both MapStyle and Reports sidebars behave identically
+- ✅ **No off-screen buttons**: Close button always accessible regardless of panel width
+- ✅ **Research-backed**: Follows 2025 mobile navigation best practices
+
+**Benefits**:
+- Generalized solution works for any sidebar with responsive width
+- Maintains existing desktop behavior while fixing mobile UX
+- Single configuration (`responsive`) handles all screen sizes automatically
+- Future-proof for additional sliding panels 
+
+### 7. Close Button Visibility Fix ✅ FIXED
+**Problem**: After implementing responsive close button positioning, user reported that close buttons were not visible at all.
+
+**Root Cause**: Flawed responsive visibility logic using conflicting Tailwind classes:
+- Inside button: `flex md:hidden` (visible on mobile, hidden on desktop)
+- Outside button: `hidden md:flex` (hidden on mobile, visible on desktop)
+- At certain breakpoints or conditions, both buttons could be hidden simultaneously
+
+**Original Logic Issues**:
+```tsx
+// PROBLEMATIC: Could result in no visible buttons
+className={isFullWidthOnMobile ? 'hidden md:flex' : 'flex'} // Outside button
+className={isFullWidthOnMobile ? 'flex md:hidden' : 'flex'} // Inside button
+```
+
+**Solution Implemented**:
+- **Simplified Logic**: Removed all responsive visibility classes
+- **Single Source of Truth**: Use only `shouldUseInsidePosition` boolean to determine which button to show
+- **Clear Conditional Rendering**: 
+  - If `shouldUseInsidePosition = true` → Show inside button only
+  - If `shouldUseInsidePosition = false` → Show outside button only
+- **Guaranteed Visibility**: Exactly one close button is always visible when panel is open
+
+**Fixed Logic**:
+```tsx
+// SIMPLE: Always shows exactly one button
+{showCloseButton && !shouldUseInsidePosition && isOpen && (
+  <button className="...flex items-center justify-center">Outside Button</button>
+)}
+
+{showCloseButton && shouldUseInsidePosition && (
+  <button className="...flex items-center justify-center">Inside Button</button>  
+)}
+```
+
+**Result**: 
+- ✅ **Always Visible**: One close button guaranteed to be visible when panel is open
+- ✅ **Responsive**: Still adapts to mobile/desktop through `shouldUseInsidePosition` logic
+- ✅ **Simplified**: No complex Tailwind responsive class conflicts
+- ✅ **Predictable**: Clear boolean logic instead of CSS-based visibility
+
+### 8. Responsive Logic Screen Size Detection ✅ FIXED
+**Problem**: User reported that close button was always inside, even on desktop/large windows.
+
+**Root Cause**: Flawed responsive detection logic:
+- Was only checking if width contained `'w-full'` string
+- Didn't actually detect current screen size
+- Result: `shouldUseInsidePosition` was always `true` for responsive panels
+
+**Previous Logic Issue**:
+```tsx
+// WRONG: Only checked width string, not actual screen size
+const shouldUseInsidePosition = 
+  closeButtonPosition === 'inside' ||
+  (closeButtonPosition === 'responsive' && isFullWidthOnMobile); // Always true!
+```
+
+**Solution Implemented**:
+- **Real Screen Size Detection**: Added `isMobile` state with `window.innerWidth < 768`
+- **Dynamic Updates**: Listens to window resize events to update mobile detection
+- **Correct Logic**: Only use inside positioning when BOTH responsive + full-width + mobile
+
+**Fixed Logic**:
+```tsx
+// State for screen size detection
+const [isMobile, setIsMobile] = useState(false);
+
+// Detect mobile screen size with resize listener
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth < 768); // md breakpoint is 768px
+  };
+  
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+  return () => window.removeEventListener('resize', checkMobile);
+}, []);
+
+// CORRECT: Checks actual screen size
+const shouldUseInsidePosition = 
+  closeButtonPosition === 'inside' ||
+  (closeButtonPosition === 'responsive' && isFullWidthOnMobile && isMobile);
+```
+
+**Result**: 
+- ✅ **Desktop (≥768px)**: Outside button (next to panel edge)
+- ✅ **Mobile (<768px)**: Inside button (in panel header)  
+- ✅ **Responsive**: Automatically adapts when resizing browser window
+- ✅ **Consistent**: Same behavior across all panels using `responsive` positioning

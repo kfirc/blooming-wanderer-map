@@ -93,7 +93,7 @@ const MapHeader: React.FC<MapHeaderProps> = ({ onInfoClick, onMapStyleClick }) =
           )}
           <button
             onClick={handleInfoClick}
-            className="p-2 rounded-full hover:bg-gray-100 transition flex items-center justify-center"
+            className="p-2 rounded-full hover:bg-gray-100 transition flex items-center justify-center ml-1"
             aria-label="מידע על הדף"
             style={{ width: 40, height: 40 }}
             onMouseEnter={() => {

@@ -10,7 +10,7 @@ interface SlidePanelProps {
   title?: string;
   showHeader?: boolean;
   showCloseButton?: boolean;
-  closeButtonPosition?: 'inside' | 'outside';
+  closeButtonPosition?: 'inside' | 'outside' | 'responsive';
   backdrop?: boolean;
   backdropBlur?: boolean;
   className?: string;
@@ -28,7 +28,7 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
   title,
   showHeader = true,
   showCloseButton = true,
-  closeButtonPosition = 'outside',
+  closeButtonPosition = 'responsive',
   backdrop = true,
   backdropBlur = true,
   className,
@@ -38,6 +38,7 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
   headerContent,
 }) => {
   const [isPanelVisible, setIsPanelVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Handle smooth opening/closing animation
   useEffect(() => {
@@ -45,6 +46,17 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
       setIsPanelVisible(true);
     }
   }, [isOpen]);
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint is 768px
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleClose = () => {
     setIsPanelVisible(false);
@@ -63,16 +75,23 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen]);
 
+  // Determine if we should use inside positioning
+  // For responsive positioning: inside on mobile, outside on desktop
+  const isFullWidthOnMobile = width.includes('w-full');
+  const shouldUseInsidePosition = 
+    closeButtonPosition === 'inside' ||
+    (closeButtonPosition === 'responsive' && isFullWidthOnMobile && isMobile);
+
   const sideClasses = {
     left: {
       position: 'left-0',
       transform: isOpen && isPanelVisible ? 'translate-x-0' : '-translate-x-full',
-      closeButton: closeButtonPosition === 'outside' ? 'right-0 translate-x-full rounded-r-lg' : 'left-4 top-4',
+      closeButton: shouldUseInsidePosition ? 'left-4 top-4' : 'right-0 translate-x-full rounded-r-lg',
     },
     right: {
       position: 'right-0', 
       transform: isOpen && isPanelVisible ? 'translate-x-0' : 'translate-x-full',
-      closeButton: closeButtonPosition === 'outside' ? 'left-0 -translate-x-full rounded-l-lg' : 'right-4 top-4',
+      closeButton: shouldUseInsidePosition ? 'right-4 top-4' : 'left-0 -translate-x-full rounded-l-lg',
     },
   };
 
@@ -105,8 +124,8 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
         onClick={(e) => e.stopPropagation()}
         dir={dir}
       >
-        {/* Close button positioned outside panel edge */}
-        {showCloseButton && closeButtonPosition === 'outside' && isOpen && (
+        {/* Close button positioned outside panel edge (only when not using inside position) */}
+        {showCloseButton && !shouldUseInsidePosition && isOpen && (
           <button
             onClick={handleClose}
             className={cn(
@@ -139,9 +158,9 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
               </h2>
             )}
             
-            {/* Close button positioned inside header (when not using outside position) */}
+            {/* Close button positioned inside header */}
             <div className="flex-shrink-0">
-              {showCloseButton && closeButtonPosition === 'inside' ? (
+              {showCloseButton && shouldUseInsidePosition ? (
                 <button
                   onClick={handleClose}
                   className="p-2 rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center"
