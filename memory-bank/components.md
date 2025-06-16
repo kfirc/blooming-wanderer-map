@@ -8,19 +8,25 @@ Bloom IL follows a modular component architecture with clear separation of conce
 - **Map.tsx**: Interactive Leaflet map displaying bloom report locations with markers and heatmap
 - **Sidebar**: Decomposed into multiple focused components (see Sidebar Architecture below)
 
-### Sidebar Architecture (Decomposed Design)
-The sidebar was refactored from a monolithic 394-line component into focused, reusable components:
+### Sidebar Architecture (Unified Design)
+The sidebar uses a unified approach with the SlidePanel component for consistent UX:
 
 **Container & Layout**:
-- **SidebarContainer.tsx**: Positioning, animations, and responsive behavior
-- **SidebarOverlay.tsx**: Mobile overlay for sidebar interactions
-- **SidebarToggle.tsx**: Toggle button with proper accessibility
+- **SidebarContainer.tsx**: Uses SlidePanel with unified close button and backdrop
+- **SlidePanel**: Unified component with configurable sides, close buttons (inside/outside), backdrop, animations
 
 **Content Components**:
 - **SidebarHeader.tsx**: Location information and Waze navigation integration
 - **SidebarContent.tsx**: Scrollable content area with proper scroll handling
 - **SidebarInfoMode.tsx**: Information display mode for location details
 - **LocationCard.tsx**: Enhanced location card with improved UX
+
+**Unified UX Features**:
+- **Consistent X Button**: Same design across all sliding panels (map style selector, reports sidebar)
+- **Unified Animations**: 300ms smooth transitions for open/close
+- **Backdrop Integration**: Blur backdrop with click-to-close functionality
+- **Keyboard Support**: ESC key closes any open panel
+- **Responsive Design**: Mobile-first with proper touch interactions
 
 ### Feature Components
 - **FlowersList.tsx**: Flower type selection and filtering interface

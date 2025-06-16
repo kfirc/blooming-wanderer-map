@@ -15,6 +15,7 @@ const Index = () => {
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const [startTransition, setStartTransition] = useState(false);
   const [transitionComplete, setTransitionComplete] = useState(false);
+  const [isMapStyleSidebarOpen, setIsMapStyleSidebarOpen] = useState(false);
   
   // USING CUSTOM HOOK: Sidebar state management
   const sidebar = useSidebarState(false);
@@ -107,6 +108,14 @@ const Index = () => {
     sidebar.open();
   };
 
+  const handleMapStyleClick = () => {
+    setIsMapStyleSidebarOpen(true);
+  };
+
+  const handleMapStyleSidebarClose = () => {
+    setIsMapStyleSidebarOpen(false);
+  };
+
   if (error) {
     return (
       <LoadingScreen message="שגיאה בטעינת הדיווחים - אנא נסה לרענן את הדף" />
@@ -121,6 +130,8 @@ const Index = () => {
           locationFlowersQueries={locationFlowersQueries}
           onLocationClick={handleLocationClick}
           selectedLocation={selectedLocation}
+          isSidebarOpen={isMapStyleSidebarOpen}
+          onSidebarClose={handleMapStyleSidebarClose}
         />
         <Sidebar 
           isOpen={sidebar.isOpen}
@@ -131,8 +142,11 @@ const Index = () => {
           flowersLoading={flowersLoading}
           flowersError={flowersError}
         />
-        {/* Only show MapHeader after transition is complete */}
-        {!showLoadingScreen && <MapHeader onInfoClick={handleInfoClick} />}
+        {/* MapHeader always visible */}
+        <MapHeader 
+          onInfoClick={handleInfoClick} 
+          onMapStyleClick={handleMapStyleClick}
+        />
         
 
       </div>

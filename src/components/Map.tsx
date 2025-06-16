@@ -5,15 +5,18 @@ import './LeafletMap.css';
 import { Location } from '../types/BloomReport';
 import MapMarkers from './map/MapMarkers';
 import MapHeatmap from './MapHeatmap';
-import MapHeader from './MapHeader';
 import MapActionButtons from './MapActionButtons';
+import MapStyleSidebar from './MapStyleSidebar';
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
+import { useMapStyle } from '../hooks/useMapStyle';
 
 interface MapProps {
   locations: Location[];
   locationFlowersQueries: Array<{ data?: unknown; isLoading: boolean; error?: unknown }>;
   onLocationClick: (location: Location) => void;
   selectedLocation: Location | null;
+  isSidebarOpen: boolean;
+  onSidebarClose: () => void;
 }
 
 // Fix for default marker icons in Leaflet
@@ -24,11 +27,16 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocationClick, selectedLocation }) => {
+const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocationClick, selectedLocation, isSidebarOpen, onSidebarClose }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMap = useRef<L.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+
+  // Map style management
+  const { currentStyleId, changeMapStyle } = useMapStyle({ 
+    mapInstance: leafletMap.current 
+  });
 
   // Enable smooth keyboard navigation with diagonal movement
   useKeyboardNavigation({ map: leafletMap.current, mapLoaded });
@@ -47,13 +55,7 @@ const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocation
       attributionControl: false
     });
 
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '',
-      maxZoom: 19
-    }).addTo(leafletMap.current);
-
-    // Set map as loaded
+    // Set map as loaded (tile layer will be added by useMapStyle hook)
     setMapLoaded(true);
     setMapError(null);
 
@@ -152,8 +154,15 @@ const Map: React.FC<MapProps> = ({ locations, locationFlowersQueries, onLocation
       />
 
       {/* UI Components */}
-      <MapHeader />
       <MapActionButtons />
+      
+      {/* Map Style Sidebar */}
+      <MapStyleSidebar
+        isOpen={isSidebarOpen}
+        onClose={onSidebarClose}
+        currentStyle={currentStyleId}
+        onStyleChange={changeMapStyle}
+      />
     </div>
   );
 };

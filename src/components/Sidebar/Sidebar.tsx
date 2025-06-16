@@ -5,14 +5,13 @@ import ReportsSection from '../ReportsSection';
 import { useReportsData } from '../../hooks/useReportsData';
 import { useDateFormatter } from '../../hooks/useDateFormatter';
 import { useFilters } from '../../hooks/useFilters';
+import { X, ChevronLeft } from 'lucide-react';
 import {
   SidebarContainer,
-  SidebarHeader,
   SidebarContent,
-  SidebarOverlay,
-  SidebarToggle,
   SidebarInfoMode,
 } from './index';
+import { WazeButton } from './WazeButton';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -115,6 +114,22 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Choose the appropriate reports data based on selected location
   const currentReportsData = selectedLocation ? locationReportsData : allReportsData;
 
+  // Determine header title based on mode and location (same logic as SidebarHeader)
+  const headerTitle = useMemo(() => {
+    if (sidebarMode === 'info') {
+      return 'מידע על הדף';
+    }
+    return selectedLocation ? selectedLocation.name : 'כל הדיווחים';
+  }, [sidebarMode, selectedLocation]);
+
+  // Determine header content (Waze button when appropriate)
+  const headerContent = useMemo(() => {
+    if (selectedLocation && sidebarMode !== 'info') {
+      return <WazeButton location={selectedLocation} />;
+    }
+    return undefined;
+  }, [selectedLocation, sidebarMode]);
+
   // Handle scroll to load more
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
@@ -167,13 +182,27 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      <SidebarOverlay isOpen={isOpen} onClose={onToggle} />
-      <SidebarToggle isOpen={isOpen} onToggle={onToggle} />
-      <SidebarContainer isOpen={isOpen}>
-        <SidebarHeader 
-          selectedLocation={selectedLocation}
-          sidebarMode={sidebarMode} 
-        />
+      {/* Toggle button to open sidebar */}
+      <button
+        onClick={onToggle}
+        className={`
+          fixed top-1/2 -translate-y-1/2 right-0 z-40 w-8 h-16 p-0 
+          bg-white shadow-lg border border-gray-200 hover:bg-gray-50 
+          transition-all duration-300 ease-in-out rounded-l-lg 
+          flex items-center justify-center
+          ${!isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+        `}
+        aria-label="פתח סרגל צד"
+      >
+        <ChevronLeft className="w-4 h-4 text-gray-600" />
+      </button>
+      
+      <SidebarContainer 
+        isOpen={isOpen} 
+        onClose={onToggle}
+        title={headerTitle}
+        headerContent={headerContent}
+      >
         <SidebarContent onScroll={handleScroll}>
           {sidebarMode === 'info' ? (
             <SidebarInfoMode />

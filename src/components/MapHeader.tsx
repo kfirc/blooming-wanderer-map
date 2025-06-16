@@ -1,24 +1,20 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Player } from '@lottiefiles/react-lottie-player';
+import { MapStyle } from '../types/BloomReport';
 
 type LottieInstance = { play: () => void; goToAndStop: (frame: number, isFrame: boolean) => void };
 
 type MapHeaderProps = {
   onInfoClick?: () => void;
+  onMapStyleClick?: () => void;
 };
 
-const MapHeader: React.FC<MapHeaderProps> = ({ onInfoClick }) => {
+const MapHeader: React.FC<MapHeaderProps> = ({ onInfoClick, onMapStyleClick }) => {
   const coffeeRef = useRef<Player | null>(null);
   const infoLottie = useRef<LottieInstance | null>(null);
+  const mapLottie = useRef<LottieInstance | null>(null);
   const [infoLottieReady, setInfoLottieReady] = useState(false);
-
-  // Play info animation once when the ref is set (after mount)
-  useEffect(() => {
-    if (infoLottieReady && infoLottie.current) {
-      infoLottie.current.goToAndStop(0, true);
-      infoLottie.current.play();
-    }
-  }, [infoLottieReady]);
+  const [mapLottieReady, setMapLottieReady] = useState(false);
 
   const handleInfoClick = () => {
     if (onInfoClick) {
@@ -62,29 +58,65 @@ const MapHeader: React.FC<MapHeaderProps> = ({ onInfoClick }) => {
           </span>
         </div>
         {/* Buttons */}
-        <div className="flex items-center gap-2 ml-4">
+        <div className="flex items-center gap-1 ml-4">
+          {/* Map Style Button */}
+          {onMapStyleClick && (
+            <button
+              onClick={onMapStyleClick}
+              className="p-2 rounded-full hover:bg-gray-100 transition flex items-center justify-center"
+              aria-label="סגנונות מפה"
+              style={{ width: 44, height: 44 }}
+              onMouseEnter={() => {
+                if (mapLottie.current) {
+                  mapLottie.current.goToAndStop(0, true);
+                  mapLottie.current.play();
+                }
+              }}
+              onMouseLeave={() => {
+                if (mapLottie.current) {
+                  mapLottie.current.goToAndStop(177, true);
+                }
+              }}
+            >
+              <Player
+                lottieRef={instance => {
+                  mapLottie.current = instance as LottieInstance;
+                  setMapLottieReady(!!instance);
+                }}
+                autoplay={false}
+                loop={true}
+                src="/map.lottie"
+                style={{ height: 40, width: 40, marginTop: 2 }}
+                keepLastFrame
+              />
+            </button>
+          )}
           <button
             onClick={handleInfoClick}
             className="p-2 rounded-full hover:bg-gray-100 transition flex items-center justify-center"
             aria-label="מידע על הדף"
-            style={{ width: 36, height: 36, marginLeft: 10, paddingTop: 13 }}
+            style={{ width: 40, height: 40 }}
             onMouseEnter={() => {
-              infoLottie.current?.goToAndStop(0, true);
-              infoLottie.current?.play();
+              if (infoLottie.current) {
+                infoLottie.current.goToAndStop(0, true);
+                infoLottie.current.play();
+              }
             }}
             onMouseLeave={() => {
-              infoLottie.current?.goToAndStop(39, true);
+              if (infoLottie.current) {
+                infoLottie.current.goToAndStop(0, true);
+              }
             }}
           >
-            <Player
+                          <Player
               lottieRef={instance => {
                 infoLottie.current = instance as LottieInstance;
                 setInfoLottieReady(!!instance);
               }}
               autoplay={false}
-              loop={false}
-              src="/information.lottie"
-              style={{ height: 28, width: 28, marginTop: -4 }}
+              loop={true}
+              src="/information2.lottie"
+              style={{ height: 36, width: 36 }}
               keepLastFrame
             />
           </button>
@@ -94,16 +126,24 @@ const MapHeader: React.FC<MapHeaderProps> = ({ onInfoClick }) => {
             rel="noopener noreferrer"
             className="p-2 rounded-full hover:bg-yellow-100 transition flex items-center justify-center"
             aria-label="Buy me a coffee"
-            style={{ width: 36, height: 36 }}
-            onMouseEnter={() => coffeeRef.current?.play()}
-            onMouseLeave={() => coffeeRef.current?.stop()}
+            style={{ width: 44, height: 44 }}
+            onMouseEnter={() => {
+              if (coffeeRef.current) {
+                coffeeRef.current.play();
+              }
+            }}
+            onMouseLeave={() => {
+              if (coffeeRef.current) {
+                coffeeRef.current.stop();
+              }
+            }}
           >
             <Player
               ref={coffeeRef}
               autoplay={false}
-              loop={false}
+              loop={true}
               src="/coffee.lottie"
-              style={{ height: 50, width: 50, marginTop: -10 }}
+              style={{ height: 60, width: 60, marginTop: -12 }}
               keepLastFrame
             />
           </a>

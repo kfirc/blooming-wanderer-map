@@ -89,3 +89,14 @@ export interface FlowerReaction {
   reaction_type: 'like' | 'dislike';
   created_at: string;
 }
+
+export interface MapStyle {
+  id: string;
+  name: string;
+  description: string;
+  url: string;
+  attribution: string;
+  maxZoom: number;
+  preview: string; // Base64 preview image or icon
+  category: 'standard' | 'satellite' | 'artistic' | 'terrain';
+}
