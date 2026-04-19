@@ -121,7 +121,7 @@ const MapHeader: React.FC<MapHeaderProps> = ({ onInfoClick, onMapStyleClick }) =
             />
           </button>
           <a
-            href="https://coff.ee/kfirco"
+            href="https://buymeacoffee.com/avivcohen"
             target="_blank"
             rel="noopener noreferrer"
             className="p-2 rounded-full hover:bg-yellow-100 transition flex items-center justify-center"
