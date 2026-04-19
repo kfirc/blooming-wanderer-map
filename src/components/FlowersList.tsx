@@ -27,13 +27,13 @@ const createFlowerTextSVG = (flowerName: string): string => {
       <defs>
         <path id="${uniqueId}" d="M 15,25 Q 45,10 75,25" fill="none" />
       </defs>
-              <text font-size="11" font-weight="bold" fill="black" text-anchor="start" font-family="Helvetica" stroke="white" stroke-width="2" paint-order="stroke">
-          <textPath href="#${uniqueId}" startOffset="60%">
+              <text font-size="11" font-weight="bold" fill="black" text-anchor="middle" font-family="Helvetica" stroke="white" stroke-width="2" paint-order="stroke">
+          <textPath href="#${uniqueId}" startOffset="50%">
             ${flowerName}
           </textPath>
         </text>
-        <text font-size="11" font-weight="bold" fill="black" text-anchor="start" font-family="Helvetica">
-          <textPath href="#${uniqueId}" startOffset="60%">
+        <text font-size="11" font-weight="bold" fill="black" text-anchor="middle" font-family="Helvetica">
+          <textPath href="#${uniqueId}" startOffset="50%">
             ${flowerName}
           </textPath>
         </text>
@@ -172,8 +172,8 @@ const FlowersList: React.FC<FlowersListProps> = ({
               />
               
               {/* Flower icon container with selection circle */}
-              <div className={`relative transition-all duration-300 ${isSelected ? 'ring-4 ring-purple-400 ring-offset-2' : ''} rounded-full`}>
-                <div className="relative">
+              <div className="relative">
+                <div className={`relative transition-all duration-300 ${isSelected ? 'ring-4 ring-purple-400 ring-offset-2' : ''} rounded-full`}>
                   {flowerData.flower.icon_url ? (
                     <img
                       src={flowerData.flower.icon_url}
@@ -185,13 +185,13 @@ const FlowersList: React.FC<FlowersListProps> = ({
                       <Flower2 className="h-8 w-8 text-white" />
                     </div>
                   )}
-                  
-                  {/* In-season glowing indicator */}
-                  <GlowingIcon
-                    isInSeason={inSeason}
-                    className="absolute -top-1 -right-1"
-                  />
                 </div>
+
+                {/* In-season glowing indicator - outside the ring container */}
+                <GlowingIcon
+                  isInSeason={inSeason}
+                  className="absolute -top-1 -right-1"
+                />
               </div>
             </div>
           );
