@@ -4,7 +4,7 @@ import type { Database } from './types';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 if (!SUPABASE_URL) throw new Error('VITE_SUPABASE_URL is not set in the environment');
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4cmxreWtwaGdoZ3djcWNmbGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MTMxMjQsImV4cCI6MjA2NTQ4OTEyNH0.atP1lg6OSXEojwCcMhc9PS-TjS7SMsRiI2NCpSOm29I";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4dG9hbXFoenVvcGp1Z2ZidnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2MDg5ODYsImV4cCI6MjA5MjE4NDk4Nn0.vs_JVEqM2R1nHbTLKKdhJkhD1v1AS0JY8aIrkzHBMgQ";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
